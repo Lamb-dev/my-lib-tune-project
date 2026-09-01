@@ -1,0 +1,11 @@
+document.addEventListener('DOMContentLoaded',()=>{
+ const token=document.querySelector('meta[name="csrf-token"]')?.content;
+ document.querySelectorAll('[data-save-book]').forEach(btn=>btn.addEventListener('click',async()=>{
+   const id=btn.dataset.saveBook;
+   try{const r=await fetch(`/books/${id}/save`,{method:'POST',headers:{'X-CSRF-TOKEN':token,'Accept':'application/json'}});const d=await r.json();btn.innerHTML=d.saved?'<i class="fa-solid fa-bookmark"></i> Saved':'<i class="fa-regular fa-bookmark"></i> Save';}catch(e){console.error(e)}}));
+ const form=document.querySelector('#review-form');
+ if(form){const buttons=[...form.querySelectorAll('[data-score]')], hidden=form.querySelector('[name=rating]'); const paint=n=>buttons.forEach(b=>b.classList.toggle('active',+b.dataset.score<=n)); paint(5); buttons.forEach(b=>b.addEventListener('click',()=>{hidden.value=b.dataset.score;paint(+b.dataset.score)})); form.addEventListener('submit',async e=>{e.preventDefault();const r=await fetch(form.dataset.reviewUrl,{method:'POST',headers:{'X-CSRF-TOKEN':token,'Accept':'application/json','Content-Type':'application/json'},body:JSON.stringify({rating:+hidden.value,review:form.querySelector('[name=review]').value})});if(r.ok){form.reset();hidden.value=5;paint(5);loadReviews()}})}
+ async function loadReviews(){if(!window.LIBTUNE_REVIEWS_URL)return;const box=document.querySelector('#reviews');if(!box)return;try{const r=await fetch(window.LIBTUNE_REVIEWS_URL);const d=await r.json();box.innerHTML=d.reviews.length?d.reviews.map(x=>`<article class="review"><div class="review-top"><strong>${escapeHtml(x.user?.username||'Reader')}</strong><span class="stars">${'★'.repeat(x.score)}${'☆'.repeat(5-x.score)}</span></div>${x.review?`<p>${escapeHtml(x.review)}</p>`:''}</article>`).join(''):'<p class="muted">Be the first reader to leave a thought.</p>'}catch(e){box.innerHTML='<p class="muted">Reviews are temporarily unavailable.</p>'}}
+ function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[c]))} loadReviews();
+ document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();document.querySelector('.global-search input')?.focus()}})
+});

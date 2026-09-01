@@ -1,0 +1,12 @@
+document.addEventListener('DOMContentLoaded',()=>{
+ const cfg=window.READER; const book=ePub(cfg.fileUrl); const rendition=book.renderTo('viewer',{width:'100%',height:'100%',flow:'paginated',spread:'none'}); const csrf=document.querySelector('meta[name="csrf-token"]').content; let lastLocation=null;
+ rendition.themes.default({body:{fontFamily:'Libre Baskerville, serif',color:'#2a2620',lineHeight:'1.7',fontSize:'100%'}});
+ book.ready.then(()=>{if(cfg.lastCfi) return rendition.display(cfg.lastCfi); return rendition.display()});
+ rendition.on('relocated',location=>{lastLocation=location.start.cfi; if(location.start.percentage!=null){const pct=Math.round(location.start.percentage*100);document.querySelector('#progress-bar').style.width=pct+'%';document.querySelector('#progress-text').textContent=pct+'%';} saveProgress(lastLocation)});
+ async function saveProgress(cfi){if(!cfi)return;try{await fetch(cfg.progressUrl,{method:'POST',headers:{'X-CSRF-TOKEN':csrf,'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({cfi})})}catch(e){}}
+ document.querySelector('#prev-page').onclick=()=>rendition.prev(); document.querySelector('#next-page').onclick=()=>rendition.next();
+ document.querySelector('#settings-toggle').onclick=()=>document.querySelector('#reader-settings').classList.add('open'); document.querySelector('#close-settings').onclick=()=>document.querySelector('#reader-settings').classList.remove('open');
+ document.querySelector('#font-size').oninput=e=>rendition.themes.fontSize(e.target.value+'%'); document.querySelector('#line-height').oninput=e=>rendition.themes.override('line-height',e.target.value/100);
+ document.querySelectorAll('[data-theme]').forEach(b=>b.onclick=()=>{document.body.classList.remove('reader-night','reader-warm');if(b.dataset.theme==='night')document.body.classList.add('reader-night');if(b.dataset.theme==='warm')document.body.classList.add('reader-warm');const c=b.dataset.theme==='night'?'#e8e4dc':b.dataset.theme==='warm'?'#3b3025':'#2a2620';rendition.themes.override('color',c);rendition.themes.override('background-color',b.dataset.theme==='night'?'#252a31':b.dataset.theme==='warm'?'#f0e2c6':'#fbf8f1')});
+ document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')rendition.prev();if(e.key==='ArrowRight')rendition.next();if(e.key==='Escape')document.querySelector('#reader-settings').classList.remove('open')});
+});
