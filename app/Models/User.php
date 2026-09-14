@@ -14,9 +14,9 @@ class User extends Authenticatable
 
     protected $primaryKey = 'user_id';
 
-    
-    
-    
+
+
+
 
 
     protected $fillable = [
@@ -39,16 +39,16 @@ class User extends Authenticatable
         ];
     }
 
-    public function isAdmin(): bool
-    {
-        return $this->role === 'admin';
-    }
 
-    public function savedBooks(): HasMany
+     public function savedBooks()
     {
-        return $this->hasMany(SavedBook::class, 'user_id', 'user_id');
+    return $this->belongsToMany(
+        Book::class,
+        'saved_books',
+        'user_id',
+        'book_id'
+    )->withTimestamps();
     }
-
     public function progress(): HasMany
     {
         return $this->hasMany(ProgressBook::class, 'user_id', 'user_id');

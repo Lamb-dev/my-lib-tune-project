@@ -17,12 +17,17 @@ class ProgressBook extends Model
     protected $fillable = [
         'book_id',
         'user_id',
+        'progress',
         'last_read',
+    ];
+      protected $casts = [
+        'progress' => 'integer',
+     
     ];
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id', 'user_id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
     public function book(): BelongsTo

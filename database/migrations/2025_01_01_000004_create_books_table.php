@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('books', function (Blueprint $table) {
             $table->id('book_id');
-            $table->string('title');
+            $table->string('title',255);
             $table->text('description')->nullable();
             $table->integer('published_year')->nullable();
 
@@ -23,10 +23,13 @@ return new class extends Migration
                 ->constrained(table: 'book_categories', column: 'cate_id')
                 ->nullOnDelete();
 
-            $table->boolean('is_copyrighted')->default(false);
-            $table->string('file_path')->nullable();
-            $table->string('cover_image')->nullable();
-
+             $table->enum('copyright_status', [
+             'public_domain',
+             'copyrighted'
+            ])->default('copyrighted');
+            $table->string('reading_url',500)->nullable();
+            $table->string('cover_image',255)->nullable();
+            $table->boolean('is_archived')->default(false);
             $table->timestamps();
         });
     }

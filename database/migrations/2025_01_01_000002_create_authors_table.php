@@ -10,9 +10,13 @@ return new class extends Migration
     {
         Schema::create('authors', function (Blueprint $table) {
             $table->id('auth_id');
-            $table->string('name');
+            $table->string('name',100);
             $table->text('biography')->nullable();
             $table->timestamps();
+            $table->date('birth_date')->nullable();
+            $table->string('nationality', 100)->nullable();
+            $table->string('photo')->nullable();
+
         });
     }
 

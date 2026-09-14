@@ -97,6 +97,13 @@
                         {{ __('Log Out') }}
                     </x-responsive-nav-link>
                 </form>
+                @if(Auth::user()->isAdmin())
+
+    <x-dropdown-link :href="route('admin.dashboard')">
+        {{ __('Admin Panel') }}
+    </x-dropdown-link>
+
+@endif
             </div>
         </div>
     </div>

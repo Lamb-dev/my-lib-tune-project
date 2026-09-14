@@ -1,0 +1,21 @@
+HTTrack3.49-2+htsswf+htsjava launched on Wed, 24 Dec 2025 09:30:21 at https://coderthemes.com/osen/layouts/index.html +*.png +*.gif +*.jpg +*.jpeg +*.css +*.js -ad.doubleclick.net/* -mime:application/foobar
+(winhttrack -qwC2%Ps2u1%s%uN0%I0p3DaK0H0%kf2A25000%f#f -F "Mozilla/4.5 (compatible; HTTrack 3.0x; Windows 98)" -%F "<!-- Mirrored from %s%s by HTTrack Website Copier/3.x [XR&CO'2014], %s -->" -%l "en, *" https://coderthemes.com/osen/layouts/index.html -O1 "C:\My Web Sites\osen" +*.png +*.gif +*.jpg +*.jpeg +*.css +*.js -ad.doubleclick.net/* -mime:application/foobar )
+
+Information, Warnings and Errors reported for this mirror:
+note:	the hts-log.txt file, and hts-cache folder, may contain sensitive information,
+	such as username/password authentication for websites mirrored in this project
+	do not share these files/folders if you want these information to remain private
+
+09:32:04	Error: 	"Not Found" (404) at link https://coderthemes.com/osen/layouts/apps-kanban.html (from https://coderthemes.com/osen/layouts/index.html)
+09:32:04	Error: 	"Not Found" (404) at link https://coderthemes.com/assets/images/dr-profile/dr-bg.jpg (from https://coderthemes.com/osen/layouts/assets/css/app.min.css)
+09:32:04	Error: 	"Not Found" (404) at link https://coderthemes.com/osen/layouts/assets/images/banner-1.jpg (from https://coderthemes.com/osen/layouts/assets/css/app.min.css)
+09:32:06	Error: 	"Not Found" (404) at link https://coderthemes.com/osen/layouts/apps-projects-list.html (from https://coderthemes.com/osen/layouts/layouts-horizontal.html)
+09:32:06	Error: 	"Not Found" (404) at link https://coderthemes.com/osen/layouts/apps-projects-details.html (from https://coderthemes.com/osen/layouts/layouts-horizontal.html)
+09:32:06	Error: 	"Not Found" (404) at link https://coderthemes.com/osen/layouts/apps-projects-gantt.html (from https://coderthemes.com/osen/layouts/layouts-horizontal.html)
+09:32:06	Error: 	"Not Found" (404) at link https://coderthemes.com/osen/layouts/apps-projects-add.html (from https://coderthemes.com/osen/layouts/layouts-horizontal.html)
+09:32:06	Error: 	"Not Found" (404) at link https://coderthemes.com/osen/layouts/apps-social-feed.html (from https://coderthemes.com/osen/layouts/layouts-horizontal.html)
+09:32:06	Error: 	"Not Found" (404) at link https://coderthemes.com/osen/layouts/widgets.html (from https://coderthemes.com/osen/layouts/layouts-horizontal.html)
+09:32:06	Error: 	"Not Found" (404) at link https://coderthemes.com/osen/layouts/ui-ribbons.html (from https://coderthemes.com/osen/layouts/layouts-horizontal.html)
+
+HTTrack Website Copier/3.49-2 mirror complete in 1 minutes 45 seconds : 362 links scanned, 351 files written (35773703 bytes overall) [17187373 bytes received at 163689 bytes/sec], 21390004 bytes transferred using HTTP compression in 232 files, ratio 12%, 22.6 requests per connection
+(10 errors, 0 warnings, 0 messages)

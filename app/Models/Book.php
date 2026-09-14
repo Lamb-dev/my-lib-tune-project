@@ -5,71 +5,86 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
+use App\Models\BookCategory;
 class Book extends Model
 {
     use HasFactory;
 
     protected $primaryKey = 'book_id';
-
+    protected $table = 'books';
     protected $fillable = [
         'title',
         'description',
         'published_year',
-        'auth_id',
         'cate_id',
-        'is_copyrighted',
-        'file_path',
+        'copyright_status',
+        'reading_url',
         'cover_image',
+        'is_archived'
     ];
 
     protected function casts(): array
     {
         return [
-            'is_copyrighted' => 'boolean',
+            'is_archived' => 'boolean',
             'published_year' => 'integer',
         ];
     }
 
-    public function author(): BelongsTo
+public function authors(): BelongsToMany
     {
-        return $this->belongsTo(Author::class, 'auth_id', 'auth_id');
+    return $this->belongsToMany(
+        Author::class,
+        'book_authors',
+        'book_id',
+        'auth_id',
+        'book_id',
+        'auth_id'
+    );
     }
-
     public function category(): BelongsTo
     {
         return $this->belongsTo(BookCategory::class, 'cate_id', 'cate_id');
     }
 
-    public function savedBy(): HasMany
+     public function savedBy(): BelongsToMany
     {
-        return $this->hasMany(SavedBook::class, 'book_id', 'book_id');
+    return $this->belongsToMany(
+        User::class,
+        'saved_books',
+        'book_id',
+        'user_id'
+        )->withTimestamps();
     }
-
     public function progress(): HasMany
     {
         return $this->hasMany(ProgressBook::class, 'book_id', 'book_id');
-    }
-
-    public function accessGrants(): HasMany
-    {
-        return $this->hasMany(Access::class, 'book_id', 'book_id');
     }
 
     public function ratings(): HasMany
     {
         return $this->hasMany(Rating::class, 'book_id', 'book_id');
     }
+    public function edit(Book $book)
+    {
+    $authors = Author::orderBy('name')->get();
 
-    /** Enforces your "only non-copyrighted books can be read online" rule. */
+    $categories = BookCategory::orderBy('cate_name')->get();
+
+    return view('admin.books.edit', compact(
+        'book',
+        'authors',
+        'categories'
+    ));
+    }
     public function isReadable(): bool
-    {
-        return ! $this->is_copyrighted && ! empty($this->file_path);
-    }
-
-    public function averageRating(): float
-    {
-        return round((float) $this->ratings()->avg('score'), 1);
-    }
+{
+    return !empty($this->reading_url);
+}
+public function averageRating(): float
+{
+    return (float) $this->ratings()->avg('score');
+}
 }
