@@ -22,7 +22,11 @@ class Book extends Model
         'copyright_status',
         'reading_url',
         'cover_image',
+<<<<<<< Updated upstream
         'is_archived'
+=======
+        'open_library_key',
+>>>>>>> Stashed changes
     ];
 
     protected function casts(): array

@@ -3,11 +3,18 @@
     $colors = ['#24344f','#536b58','#8b5e4a','#6c536f','#9a7b35','#405d67'];
     $color = $colors[$book->book_id % count($colors)];
     $initials = collect(preg_split('/\s+/', trim($book->title)))->take(2)->map(fn($w) => strtoupper(substr($w,0,1)))->join('');
+ 
+    // Open Library imports store a full external URL in cover_image;
+    // locally-uploaded covers store just a storage-relative path. Only
+    // prepend the local storage URL when it isn't already a full URL.
+    $coverUrl = $book->cover_image
+        ? (str_starts_with($book->cover_image, 'http') ? $book->cover_image : asset('storage/'.$book->cover_image))
+        : null;
 @endphp
 <article class="book-card">
     <a class="book-cover" href="{{ route('books.show', $book) }}" style="--cover: {{ $color }}">
-        @if($book->cover_image)
-            <img src="{{ asset('storage/'.$book->cover_image) }}" alt="Cover of {{ $book->title }}">
+        @if($coverUrl)
+            <img src="{{ $coverUrl }}" alt="Cover of {{ $book->title }}">
         @else
             <span class="cover-kicker">LIB-TUNE</span>
             <strong>{{ $initials }}</strong>

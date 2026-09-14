@@ -35,14 +35,14 @@
                 @endauth
             </nav>
         </header>
-
+ 
         <main>
             @if(session('status'))
                 <div class="toast"><i class="fa-solid fa-circle-check"></i>{{ session('status') }}</div>
             @endif
             @yield('content')
         </main>
-
+ 
         <footer class="footer">
             <div><span class="brand-footer">Lib-Tune</span><span> A quiet place for curious readers.</span></div>
             <div>Public-domain & non-copyrighted reading · {{ date('Y') }}</div>

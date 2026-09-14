@@ -282,7 +282,30 @@ Route::get('/dashboard', function(){
 })->name('dashboard');
 
 Route::get('/search',[BookController::class,'search'])->name('books.search');
+<<<<<<< Updated upstream
 Route::get('/books/{book}',function(Book $book){$book->load(['authors','category']);return view('books.show',compact('book'));})->name('books.show');
+=======
+Route::get('/books/{book}', function (Book $book, \App\Services\OpenLibraryService $openLibrary) {
+    $book->load(['author', 'category']);
+
+    if ($book->open_library_key && (! $book->description || ! $book->cate_id)) {
+        $details = $openLibrary->fetchWorkDetails($book->open_library_key);
+
+        $updates = [];
+        if (! $book->description && $details['description']) {
+            $updates['description'] = $details['description'];
+        }
+        if (! $book->cate_id) {
+            $updates['cate_id'] = $openLibrary->categoryFromSubjects($details['subjects']);
+        }
+        if ($updates) {
+            $book->update($updates);
+        }
+    }
+
+    return view('books.show', compact('book'));
+})->name('books.show');
+>>>>>>> Stashed changes
 Route::get('/books/{book}/reviews',[BookController::class,'getReviews'])->name('books.reviews');
 Route::get('/books/{book}/read',[BookReaderController::class,'read'])->middleware('auth')->name('books.read');
 Route::get('/books/{book}/file',[BookReaderController::class,'stream'])->middleware('auth')->name('books.file');
@@ -290,6 +313,10 @@ Route::post('/books/{book}/progress',[BookReaderController::class,'saveProgress'
 Route::post('/books/{book}/review',[BookController::class,'storeReview'])->middleware('auth')->name('books.review');
 Route::post('/books/{book}/save',function(Book $book){$saved=auth()->user()->savedBooks()->where('book_id',$book->book_id)->exists(); if($saved){auth()->user()->savedBooks()->where('book_id',$book->book_id)->delete();$saved=false;}else{auth()->user()->savedBooks()->create(['book_id'=>$book->book_id]);$saved=true;}return response()->json(['saved'=>$saved]);})->middleware('auth')->name('books.save');
 
-Route::middleware('guest')->group(function(){Route::get('/login',[AuthenticatedSessionController::class,'create'])->name('login');Route::post('/login',[AuthenticatedSessionController::class,'store']);Route::get('/register',[RegisteredUserController::class,'create'])->name('register');Route::post('/register',[RegisteredUserController::class,'store']);});
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/admin', function () {
+        return 'Welcome, admin — this page only admins can reach.';
+    })->name('admin.dashboard');
+});
 Route::post('/logout',[AuthenticatedSessionController::class,'destroy'])->middleware('auth')->name('logout');
 Route::middleware('auth')->group(function(){Route::get('/profile',[ProfileController::class,'edit'])->name('profile.edit');Route::patch('/profile',[ProfileController::class,'update'])->name('profile.update');Route::delete('/profile',[ProfileController::class,'destroy'])->name('profile.destroy');});
