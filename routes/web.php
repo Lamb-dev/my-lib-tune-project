@@ -282,9 +282,6 @@ Route::get('/dashboard', function(){
 })->name('dashboard');
 
 Route::get('/search',[BookController::class,'search'])->name('books.search');
-<<<<<<< Updated upstream
-Route::get('/books/{book}',function(Book $book){$book->load(['authors','category']);return view('books.show',compact('book'));})->name('books.show');
-=======
 Route::get('/books/{book}', function (Book $book, \App\Services\OpenLibraryService $openLibrary) {
     $book->load(['author', 'category']);
 
@@ -305,7 +302,6 @@ Route::get('/books/{book}', function (Book $book, \App\Services\OpenLibraryServi
 
     return view('books.show', compact('book'));
 })->name('books.show');
->>>>>>> Stashed changes
 Route::get('/books/{book}/reviews',[BookController::class,'getReviews'])->name('books.reviews');
 Route::get('/books/{book}/read',[BookReaderController::class,'read'])->middleware('auth')->name('books.read');
 Route::get('/books/{book}/file',[BookReaderController::class,'stream'])->middleware('auth')->name('books.file');
