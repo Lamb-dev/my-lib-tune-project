@@ -3,10 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 
 class AdminAuthController extends Controller
 {
@@ -22,18 +20,16 @@ class AdminAuthController extends Controller
             'admin_password' => 'required',
         ]);
 
-        $admin = Admin::where('admin_email', $credentials['admin_email'])->first();
+        // Map your form input field 'admin_password' to the 'password' key expected by Auth::attempt()
+        $authCredentials = [
+            'admin_email' => $credentials['admin_email'],
+            'password' => $credentials['admin_password'],
+        ];
 
-        if ($admin && Hash::check(
-            $credentials['admin_password'],
-            $admin->admin_password
-        )) {
-
-            Auth::guard('admin')->login($admin);
-
+        if (Auth::guard('admin')->attempt($authCredentials)) {
             $request->session()->regenerate();
 
-            return redirect()->route('admin.dashboard');
+            return redirect()->intended(route('admin.dashboard'));
         }
 
         return back()->withErrors([

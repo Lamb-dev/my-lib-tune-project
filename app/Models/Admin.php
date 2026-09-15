@@ -3,14 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 
 class Admin extends Authenticatable
 {
-    use Notifiable;
-
-    protected $table = 'admins';
-
+    protected $table = 'admins'; 
     protected $primaryKey = 'admin_id';
 
     protected $fillable = [
@@ -24,8 +20,11 @@ class Admin extends Authenticatable
         'remember_token',
     ];
 
-    public function getAuthPassword()
+    /**
+     * Overrides Laravel's default 'password' column name.
+     */
+    public function getAuthPasswordName()
     {
-        return $this->admin_password;
+        return 'admin_password';
     }
 }

@@ -18,10 +18,6 @@ class DashboardController extends Controller
         $totalUsers = User::count();
         $archivedBooks = Book::where('is_archived', true)->count();
 
-        // Pulled wider than one "page" of the dashboard widget on purpose —
-        // the Blade view paginates these client-side in fixed-size pages so
-        // the card height (and therefore the footer position) stays stable
-        // no matter how many books/categories exist.
         $recentBooks = Book::with(['authors', 'category'])
             ->latest()
             ->limit(20)

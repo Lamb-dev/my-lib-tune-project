@@ -27,7 +27,7 @@
             <a href="{{ route('books.show', $book) }}" class="book-title">{{ $book->title }}</a>
             @if($book->isReadable()) <span class="read-dot" title="Available to read"></span> @endif
         </div>
-        <div class="author">{{ $book->author?->name ?? 'Unknown author' }}</div>
+        <div class="author">{{ $book->authorNames() }}</div>
         <div class="rating-line"><span class="stars">★</span> {{ number_format($book->averageRating(), 1) }} <span class="muted">· {{ $book->ratings_count ?? $book->ratings()->count() }} ratings</span></div>
     </div>
 </article>
