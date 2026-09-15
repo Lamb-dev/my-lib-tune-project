@@ -25,6 +25,7 @@ class SettingsController extends Controller
     {
         $request->validate([
             'logo' => 'required|image|mimes:png,jpg,jpeg,webp,svg|max:1024',
+            'logo' => 'required|image|mimes:png,jpg,jpeg,webp,svg|max:2048',
         ]);
 
         // Remove any previously uploaded logo (whatever its extension was).
