@@ -52,7 +52,7 @@ class BookController extends Controller
             'description' => 'nullable|string',
             'copyright_status' => 'nullable|in:public_domain,copyrighted',
             'reading_url' => 'nullable|url|max:500',
-            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,webp,avif,jfif|max:2048',
             'is_archived' => 'nullable|boolean',
         ]);
 
@@ -124,7 +124,7 @@ class BookController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'published_year' => ['nullable', 'integer', 'min:1000', 'max:' . date('Y')],
-            'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp,avif,jfif', 'max:2048'],
             'authors' => ['required', 'array', 'min:1'],
             'authors.*' => ['exists:authors,auth_id'],
             'cate_id' => ['nullable', 'exists:book_categories,cate_id'],

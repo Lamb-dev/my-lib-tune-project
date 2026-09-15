@@ -1,14 +1,29 @@
 @extends('layouts.app')
 @section('title', $book->title)
 @section('content')
+@php
+    // Open Library imports store a full external URL in cover_image;
+    // locally-uploaded covers store just a storage-relative path. Only
+    // prepend the local storage URL when it isn't already a full URL.
+    $coverUrl = $book->cover_image
+        ? (str_starts_with($book->cover_image, 'http') ? $book->cover_image : asset('storage/'.$book->cover_image))
+        : null;
+@endphp
 <div class="book-detail">
     <a class="back-link" href="{{ url()->previous() }}"><i class="fa-solid fa-arrow-left"></i> Back to catalogue</a>
     <div class="detail-grid">
-        <div class="detail-cover-wrap"><div class="detail-cover" style="--cover: {{ ['#24344f','#536b58','#8b5e4a','#6c536f','#9a7b35'][$book->book_id % 5] }}"><span>LIB-TUNE</span><strong>{{ collect(preg_split('/\s+/',trim($book->title)))->take(2)->map(fn($w)=>strtoupper(substr($w,0,1)))->join('') }}</strong><small>{{ $book->title }}</small></div></div>
+        <div class="detail-cover-wrap">
+            @if($coverUrl)
+                <img class="detail-cover-img" src="{{ $coverUrl }}" alt="Cover of {{ $book->title }}">
+            @else
+                <div class="detail-cover" style="--cover: {{ ['#24344f','#536b58','#8b5e4a','#6c536f','#9a7b35'][$book->book_id % 5] }}"><span>LIB-TUNE</span><strong>{{ collect(preg_split('/\s+/',trim($book->title)))->take(2)->map(fn($w)=>strtoupper(substr($w,0,1)))->join('') }}</strong><small>{{ $book->title }}</small></div>
+            @endif
+        </div>
         <div class="detail-copy"><p class="eyebrow">{{ $book->category?->cate_name ?? 'BOOK' }} · {{ $book->published_year ?? '—' }}</p><h1>{{ $book->title }}</h1><p class="detail-author">by <strong>{{ $book->authorNames() }}</strong></p>
             <div class="detail-rating"><span class="big-rating">{{ number_format($book->averageRating(),1) }}</span><span><span class="big-stars">★★★★★</span><small>{{ $book->ratings()->count() }} reader ratings</small></span></div>
             <p class="description">{{ $book->description ?: 'No description has been added for this book yet. Open it and discover the story for yourself.' }}</p>
             <div class="detail-actions">@if($book->isReadable())<a href="{{ route('books.read',$book) }}" class="button button-dark"><i class="fa-solid fa-book-open"></i> Read online</a>@else<span class="button button-muted">Reading unavailable</span>@endif
+            @if($book->reading_url)<a href="{{ $book->reading_url }}" target="_blank" rel="noopener noreferrer" class="button button-outline"><i class="fa-solid fa-arrow-up-right-from-square"></i> View source link</a>@endif
             @auth<button class="button button-outline" data-save-book="{{ $book->book_id }}"><i class="fa-regular fa-bookmark"></i> Save</button>@endauth</div>
             <div class="book-facts"><div><span>AUTHOR</span>{{ $book->authorNames() }}</div><div><span>YEAR</span>{{ $book->published_year ?? 'Unknown' }}</div><div><span>FORMAT</span>{{ $book->isReadable() ? 'EPUB · Online' : 'Catalogue only' }}</div></div>
         </div>
