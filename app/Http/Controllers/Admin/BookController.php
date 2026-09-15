@@ -146,8 +146,6 @@ class BookController extends Controller
 
         $book->update([
             'title' => $validated['title'],
-            // keep the legacy single-author column in sync with the pivot
-            'auth_id' => $validated['authors'][0],
             'description' => $validated['description'] ?? null,
             'published_year' => $validated['published_year'] ?? null,
             'cover_image' => $coverPath,

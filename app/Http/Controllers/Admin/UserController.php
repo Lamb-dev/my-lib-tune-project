@@ -9,8 +9,21 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::latest()->paginate(15);
+        $users = User::withCount(['ratings', 'savedBooks'])
+            ->latest()
+            ->paginate(15);
 
-        return view('admin.users.index', compact('users'));
+        $totalUsers = User::count();
+        $totalAdmins = User::where('role', 'admin')->count();
+        $newThisMonth = User::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+
+        return view('admin.users.index', compact(
+            'users',
+            'totalUsers',
+            'totalAdmins',
+            'newThisMonth'
+        ));
     }
 }

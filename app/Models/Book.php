@@ -19,6 +19,7 @@ class Book extends Model
         'title',
         'description',
         'published_year',
+        'auth_id',
         'cate_id',
         'copyright_status',
         'reading_url',
