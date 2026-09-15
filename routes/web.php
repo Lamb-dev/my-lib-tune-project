@@ -44,6 +44,11 @@ Route::get('/dashboard', function () {
     return view('dashboard', compact('popular', 'recent'));
 })->name('dashboard');
 
+Route::get('/about', function () {
+    return view('aboutus'); // matching 'aboutus.blade.php'
+}) ->name('aboutus');
+
+
 /*
 |--------------------------------------------------------------------------
 | Authentication (regular users)
