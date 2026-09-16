@@ -19,7 +19,6 @@ class Book extends Model
         'title',
         'description',
         'published_year',
-        'auth_id',
         'cate_id',
         'copyright_status',
         'reading_url',
@@ -52,6 +51,18 @@ class Book extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(BookCategory::class, 'cate_id', 'cate_id');
+    }
+
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            BookCategory::class,
+            'book_category_pivot',
+            'book_id',
+            'cate_id',
+            'book_id',
+            'cate_id'
+        );
     }
 
     public function savedBy(): BelongsToMany
@@ -88,5 +99,11 @@ class Book extends Model
     public function authorNames(): string
     {
         return $this->authors->pluck('name')->join(', ', ' & ') ?: 'Unknown author';
+    }
+
+    /** Same idea as authorNames(), for a book's one or more categories. */
+    public function categoryNames(): string
+    {
+        return $this->categories->pluck('cate_name')->join(', ', ' & ') ?: ($this->category?->cate_name ?? 'Uncategorised');
     }
 }

@@ -119,6 +119,10 @@ class OpenLibraryService
                 $book->update(['cate_id' => $categoryId]);
             }
 
+            if ($categoryId && ! $book->categories()->where('book_categories.cate_id', $categoryId)->exists()) {
+                $book->categories()->attach($categoryId);
+            }
+
             if (! $book->authors()->where('authors.auth_id', $authorId)->exists()) {
                 $book->authors()->attach($authorId);
             }

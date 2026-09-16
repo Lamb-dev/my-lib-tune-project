@@ -19,7 +19,7 @@
                 <div class="detail-cover" style="--cover: {{ ['#24344f','#536b58','#8b5e4a','#6c536f','#9a7b35'][$book->book_id % 5] }}"><span>LIB-TUNE</span><strong>{{ collect(preg_split('/\s+/',trim($book->title)))->take(2)->map(fn($w)=>strtoupper(substr($w,0,1)))->join('') }}</strong><small>{{ $book->title }}</small></div>
             @endif
         </div>
-        <div class="detail-copy"><p class="eyebrow">{{ $book->category?->cate_name ?? 'BOOK' }} · {{ $book->published_year ?? '—' }}</p><h1>{{ $book->title }}</h1><p class="detail-author">by <strong>{{ $book->authorNames() }}</strong></p>
+        <div class="detail-copy"><p class="eyebrow">{{ $book->categoryNames() }} · {{ $book->published_year ?? '—' }}</p><h1>{{ $book->title }}</h1><p class="detail-author">by <strong>{{ $book->authorNames() }}</strong></p>
             <div class="detail-rating"><span class="big-rating">{{ number_format($book->averageRating(),1) }}</span><span><span class="big-stars">★★★★★</span><small>{{ $book->ratings()->count() }} reader ratings</small></span></div>
             <p class="description">{{ $book->description ?: 'No description has been added for this book yet. Open it and discover the story for yourself.' }}</p>
             <div class="detail-actions">@if($book->isReadable())<a href="{{ route('books.read',$book) }}" class="button button-dark"><i class="fa-solid fa-book-open"></i> Read online</a>@else<span class="button button-muted">Reading unavailable</span>@endif

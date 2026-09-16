@@ -80,7 +80,7 @@
                     <!--end table-responsive-->
 
                     <div class="mt-3">
-                        {{ $categories->links() }}
+                        {{ $categories->links('pagination::bootstrap-5') }}
                     </div>
 
                 @else

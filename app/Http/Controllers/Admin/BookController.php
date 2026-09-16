@@ -16,7 +16,7 @@ class BookController extends Controller
      */
     public function index()
     {
-        $books = Book::with(['authors', 'category'])
+        $books = Book::with(['authors', 'categories'])
             ->latest()
             ->paginate(10);
 
@@ -47,7 +47,8 @@ class BookController extends Controller
             'title' => 'required|string|max:255',
             'authors' => 'required|array|min:1',
             'authors.*' => 'exists:authors,auth_id',
-            'cate_id' => 'nullable|exists:book_categories,cate_id',
+            'categories' => 'required|array|min:1',
+            'categories.*' => 'exists:book_categories,cate_id',
             'published_year' => 'nullable|integer|min:0|max:' . date('Y'),
             'description' => 'nullable|string',
             'copyright_status' => 'nullable|in:public_domain,copyrighted',
@@ -64,10 +65,8 @@ class BookController extends Controller
 
         $book = Book::create([
             'title' => $validated['title'],
-            // legacy single-author column still required by the books table;
-            // kept in sync with the first selected author so inserts never fail.
-            'auth_id' => $validated['authors'][0],
-            'cate_id' => $validated['cate_id'] ?? null,
+            // keep the legacy single-category column in sync with the pivot
+            'cate_id' => $validated['categories'][0],
             'published_year' => $validated['published_year'] ?? null,
             'description' => $validated['description'] ?? null,
             'copyright_status' => $validated['copyright_status'] ?? 'copyrighted',
@@ -77,6 +76,7 @@ class BookController extends Controller
         ]);
 
         $book->authors()->attach($validated['authors']);
+        $book->categories()->attach($validated['categories']);
 
         return redirect()
             ->route('admin.books.index')
@@ -90,7 +90,7 @@ class BookController extends Controller
     {
         $book->load([
             'authors',
-            'category',
+            'categories',
             'ratings',
         ]);
 
@@ -106,7 +106,7 @@ class BookController extends Controller
 
         $categories = BookCategory::orderBy('cate_name')->get();
 
-        $book->load('authors');
+        $book->load(['authors', 'categories']);
 
         return view('admin.books.edit', compact(
             'book',
@@ -127,7 +127,8 @@ class BookController extends Controller
             'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp,avif,jfif', 'max:2048'],
             'authors' => ['required', 'array', 'min:1'],
             'authors.*' => ['exists:authors,auth_id'],
-            'cate_id' => ['nullable', 'exists:book_categories,cate_id'],
+            'categories' => ['required', 'array', 'min:1'],
+            'categories.*' => ['exists:book_categories,cate_id'],
             'copyright_status' => ['nullable', 'in:public_domain,copyrighted'],
             'reading_url' => ['nullable', 'url', 'max:500'],
             'is_archived' => ['nullable', 'boolean'],
@@ -149,13 +150,15 @@ class BookController extends Controller
             'description' => $validated['description'] ?? null,
             'published_year' => $validated['published_year'] ?? null,
             'cover_image' => $coverPath,
-            'cate_id' => $validated['cate_id'] ?? null,
+            // keep the legacy single-category column in sync with the pivot
+            'cate_id' => $validated['categories'][0],
             'copyright_status' => $validated['copyright_status'] ?? 'copyrighted',
             'reading_url' => $validated['reading_url'] ?? null,
             'is_archived' => $request->boolean('is_archived'),
         ]);
 
         $book->authors()->sync($validated['authors']);
+        $book->categories()->sync($validated['categories']);
 
         return redirect()
             ->route('admin.books.index')

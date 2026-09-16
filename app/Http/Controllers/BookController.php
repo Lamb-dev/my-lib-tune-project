@@ -23,10 +23,12 @@ class BookController extends Controller
         $query = trim((string) $request->input('query', ''));
         $categoryId = $request->input('category');
 
-        $booksQuery = Book::with(['authors', 'category']);
+        $booksQuery = Book::with(['authors', 'categories']);
 
         if ($categoryId) {
-            $booksQuery->where('cate_id', $categoryId);
+            $booksQuery->whereHas('categories', function ($c) use ($categoryId) {
+                $c->where('book_categories.cate_id', $categoryId);
+            });
         }
 
         if ($query !== '') {

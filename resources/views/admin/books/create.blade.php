@@ -83,18 +83,22 @@
 
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="cate_id" class="form-label">Category</label>
-                                <select name="cate_id" id="cate_id" class="form-select @error('cate_id') is-invalid @enderror">
-                                    <option value="">Select a category</option>
+                                <label for="categories" class="form-label">Categories</label>
+                                <select name="categories[]"
+                                        id="categories"
+                                        class="form-select @error('categories') is-invalid @enderror"
+                                        multiple
+                                        required>
                                     @foreach($categories as $category)
                                         <option value="{{ $category->cate_id }}"
-                                            {{ old('cate_id') == $category->cate_id ? 'selected' : '' }}>
+                                            {{ collect(old('categories'))->contains($category->cate_id) ? 'selected' : '' }}>
                                             {{ $category->cate_name }}
                                         </option>
                                     @endforeach
                                 </select>
-                                @error('cate_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                <small class="text-muted">Hold Ctrl (Cmd on Mac) to select multiple.</small>
+                                @error('categories')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>

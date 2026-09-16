@@ -55,6 +55,12 @@ class LibrarySeeder extends Seeder
             if (! $book->authors()->where('authors.auth_id', $authorId)->exists()) {
                 $book->authors()->attach($authorId);
             }
+
+             $categoryId = $categories[$bookData['category']];
+            if (! $book->categories()->where('book_categories.cate_id',
+             $categoryId)->exists()) {
+                $book->categories()->attach($categoryId);
+            }
         }
     }
 }
