@@ -34,6 +34,11 @@
                     <a class="button button-dark button-small" href="{{ route('register') }}">Join</a>
                 @endauth
             </nav>
+
+            <nav class="top-actions-mobile">
+                <a href="{{ route('aboutus') }}" class="nav-link">About</a>
+            </nav>
+
         </header>
  
         <main>

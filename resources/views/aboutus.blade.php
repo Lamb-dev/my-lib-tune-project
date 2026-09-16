@@ -4,8 +4,8 @@
 
 @section('content')
     <div class="container">
-        <h1 style="text-align: center; margin-top: 50px;">About Us</h1>
-        <p>This is the about page. Lorum Ipsum, etc.</p>
+        <h1 style="text-align: center; margin-top: 50px;">About Us</h1><br>
+        <p>Lib-Tune is a free internet library where our mission is to give unlimited access to many various of books for people who love reading and also for people who want to get started on their reading journey.</p>
     </div>
 
     <h2 style="text-align:center">Our Team</h2>
