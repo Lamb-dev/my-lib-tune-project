@@ -15,18 +15,22 @@ class BookController extends Controller
     // Browse/search books. Supports three modes, combinable:
     // - no query, no category: every book (browse all)
     // - category: filter by the real book_categories relationship
-    // - query: keyword match on title/author, supplemented by Open
-    //   Library when local results are thin (only for real searches,
-    //   not category browsing).
+    // - query: keyword match on title/author
+    //
+    // When a keyword search returns few local hits we also fetch Open
+    // Library suggestions. These are DISPLAY ONLY — nothing is written to
+    // the database. An admin adds them deliberately via the admin form.
     public function search(Request $request, OpenLibraryService $openLibrary)
     {
         $query = trim((string) $request->input('query', ''));
         $categoryId = $request->input('category');
 
-        $booksQuery = Book::with(['authors', 'category']);
+        $booksQuery = Book::with(['authors', 'categories']);
 
         if ($categoryId) {
-            $booksQuery->where('cate_id', $categoryId);
+            $booksQuery->whereHas('categories', function ($c) use ($categoryId) {
+                $c->where('book_categories.cate_id', $categoryId);
+            });
         }
 
         if ($query !== '') {
@@ -40,14 +44,36 @@ class BookController extends Controller
 
         $books = $booksQuery->latest('book_id')->get();
 
-        if ($query !== '' && $books->count() < 10) {
-            $imported = $openLibrary->importResults($openLibrary->search($query));
-            $books = $books->merge($imported)->unique('book_id')->values();
+        // Suggestions from Open Library: shown as "not in our library yet",
+        // never inserted. Only for real keyword searches (not category
+        // browsing) and only when the local shelf is thin.
+        $suggestions = collect();
+
+        if ($query !== '' && ! $categoryId && $books->count() < 10) {
+            $existingKeys = Book::whereNotNull('open_library_key')
+                ->pluck('open_library_key')
+                ->all();
+
+            $localTitles = $books->map(fn ($b) => strtolower($b->title))->all();
+
+            $suggestions = collect($openLibrary->search($query, 12))
+                ->filter(fn ($doc) => ! empty($doc['key']) && ! empty($doc['title']))
+                ->reject(fn ($doc) => in_array($doc['key'], $existingKeys, true))
+                ->reject(fn ($doc) => in_array(strtolower($doc['title']), $localTitles, true))
+                ->map(fn ($doc) => [
+                    'key' => $doc['key'],
+                    'title' => $doc['title'],
+                    'authors' => implode(', ', array_slice($doc['author_name'] ?? [], 0, 2)) ?: 'Unknown author',
+                    'year' => $doc['first_publish_year'] ?? null,
+                    'cover' => $openLibrary->coverUrl($doc['cover_i'] ?? null, 'M'),
+                ])
+                ->take(6)
+                ->values();
         }
 
         $categories = BookCategory::orderBy('cate_name')->get();
 
-        return view('books.index', compact('books', 'query', 'categoryId', 'categories'));
+        return view('books.index', compact('books', 'query', 'categoryId', 'categories', 'suggestions'));
     }
 
     public function uploadEpub(Request $request, Book $book)

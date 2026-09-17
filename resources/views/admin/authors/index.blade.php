@@ -108,7 +108,7 @@
                 <!--end table-responsive-->
 
                 <div class="mt-3">
-                    {{ $authors->links() }}
+                    {{ $authors->links('pagination::bootstrap-5') }}
                 </div>
 
             </div>
