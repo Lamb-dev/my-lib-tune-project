@@ -10,7 +10,7 @@ class BookCategoryController extends Controller
 {
     public function index()
     {
-        $categories = BookCategory::orderBy('cate_id', 'desc')->get();
+        $categories = BookCategory::orderBy('cate_id', 'desc')->paginate(10);
 
         return view('admin.categories.index', compact('categories'));
     }

@@ -6,6 +6,7 @@ use App\Models\BookCategory;
 use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Models\Author;
+use App\Services\OpenLibraryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -16,7 +17,7 @@ class BookController extends Controller
      */
     public function index()
     {
-        $books = Book::with(['authors', 'category'])
+        $books = Book::with(['authors', 'categories'])
             ->latest()
             ->paginate(10);
 
@@ -39,6 +40,59 @@ class BookController extends Controller
     }
 
     /**
+     * Look up books on Open Library to pre-fill the manual add form.
+     *
+     * This endpoint NEVER writes to the database — it only returns data
+     * for the admin to review, edit and submit through the normal
+     * store() flow. Two modes:
+     *   ?q=dune          -> list of matching results
+     *   ?key=/works/OL1W -> description + suggested category for one work
+     */
+    public function lookup(Request $request, OpenLibraryService $openLibrary)
+    {
+        $workKey = trim((string) $request->input('key', ''));
+
+        if ($workKey !== '') {
+            $details = $openLibrary->fetchWorkDetails($workKey);
+
+            $suggested = null;
+            if (! empty($details['subjects'])) {
+                $cateId = $openLibrary->categoryFromSubjects($details['subjects']);
+                $suggested = BookCategory::find($cateId)?->cate_name;
+            }
+
+            return response()->json([
+                'description' => $details['description'],
+                'suggested_category' => $suggested,
+            ]);
+        }
+
+        $query = trim((string) $request->input('q', ''));
+
+        if ($query === '') {
+            return response()->json(['results' => []]);
+        }
+
+        $results = collect($openLibrary->search($query, 8))
+            ->filter(fn ($doc) => ! empty($doc['key']) && ! empty($doc['title']))
+            ->map(fn ($doc) => [
+                'key' => $doc['key'],
+                'title' => $doc['title'],
+                'authors' => $doc['author_name'] ?? [],
+                'year' => $doc['first_publish_year'] ?? null,
+                'cover' => $openLibrary->coverUrl($doc['cover_i'] ?? null),
+                'already_added' => Book::where('open_library_key', $doc['key'])->exists(),
+                'is_public_domain' => $openLibrary->isPublicDomain($doc),
+                'reading_url' => $openLibrary->isPublicDomain($doc)
+                    ? $openLibrary->readingUrlFromDoc($doc)
+                    : null,
+            ])
+            ->values();
+
+        return response()->json(['results' => $results]);
+    }
+
+    /**
      * Store a newly created book.
      */
     public function store(Request $request)
@@ -47,12 +101,15 @@ class BookController extends Controller
             'title' => 'required|string|max:255',
             'authors' => 'required|array|min:1',
             'authors.*' => 'exists:authors,auth_id',
-            'cate_id' => 'nullable|exists:book_categories,cate_id',
+            'categories' => 'required|array|min:1',
+            'categories.*' => 'exists:book_categories,cate_id',
             'published_year' => 'nullable|integer|min:0|max:' . date('Y'),
             'description' => 'nullable|string',
             'copyright_status' => 'nullable|in:public_domain,copyrighted',
             'reading_url' => 'nullable|url|max:500',
-            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,webp,avif,jfif|max:2048',
+            'cover_image_url' => 'nullable|url|max:500',
+            'open_library_key' => 'nullable|string|max:100',
             'is_archived' => 'nullable|boolean',
         ]);
 
@@ -60,23 +117,27 @@ class BookController extends Controller
 
         if ($request->hasFile('cover_image')) {
             $coverPath = $request->file('cover_image')->store('books', 'public');
+        } elseif (! empty($validated['cover_image_url'])) {
+            // Filled in by the Open Library lookup. Stored as a full URL —
+            // the views already handle both full URLs and local paths.
+            $coverPath = $validated['cover_image_url'];
         }
 
         $book = Book::create([
             'title' => $validated['title'],
-            // legacy single-author column still required by the books table;
-            // kept in sync with the first selected author so inserts never fail.
-            'auth_id' => $validated['authors'][0],
-            'cate_id' => $validated['cate_id'] ?? null,
+            // keep the legacy single-category column in sync with the pivot
+            'cate_id' => $validated['categories'][0],
             'published_year' => $validated['published_year'] ?? null,
             'description' => $validated['description'] ?? null,
             'copyright_status' => $validated['copyright_status'] ?? 'copyrighted',
             'reading_url' => $validated['reading_url'] ?? null,
             'cover_image' => $coverPath,
+            'open_library_key' => $validated['open_library_key'] ?? null,
             'is_archived' => $request->boolean('is_archived'),
         ]);
 
         $book->authors()->attach($validated['authors']);
+        $book->categories()->attach($validated['categories']);
 
         return redirect()
             ->route('admin.books.index')
@@ -90,7 +151,7 @@ class BookController extends Controller
     {
         $book->load([
             'authors',
-            'category',
+            'categories',
             'ratings',
         ]);
 
@@ -106,7 +167,7 @@ class BookController extends Controller
 
         $categories = BookCategory::orderBy('cate_name')->get();
 
-        $book->load('authors');
+        $book->load(['authors', 'categories']);
 
         return view('admin.books.edit', compact(
             'book',
@@ -124,10 +185,11 @@ class BookController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'published_year' => ['nullable', 'integer', 'min:1000', 'max:' . date('Y')],
-            'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp,avif,jfif', 'max:2048'],
             'authors' => ['required', 'array', 'min:1'],
             'authors.*' => ['exists:authors,auth_id'],
-            'cate_id' => ['nullable', 'exists:book_categories,cate_id'],
+            'categories' => ['required', 'array', 'min:1'],
+            'categories.*' => ['exists:book_categories,cate_id'],
             'copyright_status' => ['nullable', 'in:public_domain,copyrighted'],
             'reading_url' => ['nullable', 'url', 'max:500'],
             'is_archived' => ['nullable', 'boolean'],
@@ -146,18 +208,18 @@ class BookController extends Controller
 
         $book->update([
             'title' => $validated['title'],
-            // keep the legacy single-author column in sync with the pivot
-            'auth_id' => $validated['authors'][0],
             'description' => $validated['description'] ?? null,
             'published_year' => $validated['published_year'] ?? null,
             'cover_image' => $coverPath,
-            'cate_id' => $validated['cate_id'] ?? null,
+            // keep the legacy single-category column in sync with the pivot
+            'cate_id' => $validated['categories'][0],
             'copyright_status' => $validated['copyright_status'] ?? 'copyrighted',
             'reading_url' => $validated['reading_url'] ?? null,
             'is_archived' => $request->boolean('is_archived'),
         ]);
 
         $book->authors()->sync($validated['authors']);
+        $book->categories()->sync($validated['categories']);
 
         return redirect()
             ->route('admin.books.index')

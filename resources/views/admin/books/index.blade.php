@@ -83,13 +83,13 @@
                                         </td>
 
                                         <td>
-                                            @if($book->category)
+                                            @forelse($book->categories as $category)
                                                 <span class="badge bg-info-subtle text-info">
-                                                    {{ $book->category->cate_name }}
+                                                    {{ $category->cate_name }}
                                                 </span>
-                                            @else
+                                            @empty
                                                 <span class="text-muted">Uncategorized</span>
-                                            @endif
+                                            @endforelse
                                         </td>
 
                                         <td>{{ $book->published_year ?? 'N/A' }}</td>
@@ -137,7 +137,7 @@
                     <!--end table-responsive-->
 
                     <div class="mt-3">
-                        {{ $books->links() }}
+                        {{ $books->links('pagination::bootstrap-5') }}
                     </div>
 
                 @else

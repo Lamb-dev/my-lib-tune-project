@@ -21,32 +21,6 @@
     <link href="{{ asset('backend/assets/css/icons.min.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('backend/assets/css/app.min.css') }}" rel="stylesheet" type="text/css" />
 
-    {{--
-        The theme's default .footer{position:absolute} floats the footer relative to
-        whatever ancestor happens to be positioned, so on pages with less content it
-        overlaps the page body instead of sitting below it. This turns the wrapper
-        into a standard sticky-footer flex column so the footer always sits after
-        the content, never on top of it, on every page (short or long).
-    --}}
-    <style>
-        .page-wrapper {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        .page-wrapper .page-content {
-            flex: 1 0 auto;
-            padding-bottom: 24px;
-        }
-        .page-wrapper .footer {
-            position: relative;
-            bottom: auto;
-            left: auto;
-            right: auto;
-            flex-shrink: 0;
-        }
-    </style>
-
     @yield('styles')
 </head>
 
@@ -217,17 +191,22 @@
                 @yield('content')
 
             </div>
-        </div>
 
-        <footer class="footer text-center text-sm-start d-print-none">
-            <div class="container-xxl">
-                <div class="row">
-                    <div class="col-12">
-                        <p class="text-muted mb-0 py-2">&copy; {{ date('Y') }} LibTune Admin</p>
+            {{-- The theme's CSS positions .footer with position:absolute relative
+                 to .page-content (which reserves padding-bottom for it) - it has
+                 to live inside .page-content, not as a sibling, or it floats over
+                 whatever content happens to be at that scroll position instead of
+                 sitting at the true bottom of the page. --}}
+            <footer class="footer text-center text-sm-start d-print-none">
+                <div class="container-xxl">
+                    <div class="row">
+                        <div class="col-12">
+                            <p class="text-muted mb-0 py-2">&copy; {{ date('Y') }} LibTune Admin</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </footer>
+            </footer>
+        </div>
     </div>
 
     <script src="{{ asset('backend/assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
