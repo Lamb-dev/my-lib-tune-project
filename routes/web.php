@@ -138,6 +138,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     Route::middleware('admin')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        // must be declared before the resource route, otherwise
+        // books/{book} captures "lookup" as a book id
+        Route::get('/books-lookup', [AdminBookController::class, 'lookup'])->name('books.lookup');
         Route::resource('books', AdminBookController::class);
         Route::resource('authors', AuthorController::class);
         Route::resource('categories', BookCategoryController::class);

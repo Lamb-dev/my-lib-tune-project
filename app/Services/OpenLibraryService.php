@@ -14,7 +14,7 @@ class OpenLibraryService
     public function search(string $query, int $limit = 10): array
     {
         try {
-            $response = Http::timeout(5)->get('https://openlibrary.org/search.json', [
+            $response = Http::timeout(15)->retry(2, 300)->get('https://openlibrary.org/search.json', [
                 'q' => $query,
                 'limit' => $limit,
                 'fields' => 'key,title,author_name,first_publish_year,cover_i,subject',
@@ -30,7 +30,7 @@ class OpenLibraryService
     public function fetchWorkDetails(string $workKey): array
     {
         try {
-            $response = Http::timeout(5)->get("https://openlibrary.org{$workKey}.json");
+            $response = Http::timeout(15)->retry(2, 300)->get("https://openlibrary.org{$workKey}.json");
 
             if (! $response->successful()) {
                 return ['description' => null, 'subjects' => []];

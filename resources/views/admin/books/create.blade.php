@@ -18,11 +18,35 @@
 
             <div class="card-body pt-0">
 
+                <div class="border rounded p-3 mb-4 bg-light-subtle">
+                    <label for="ol-query" class="form-label mb-1">
+                        Pre-fill from Open Library <span class="text-muted fs-12">(optional)</span>
+                    </label>
+                    <p class="text-muted fs-12 mb-2">
+                        Search for a book, pick a result, and the fields below are filled in for you.
+                        Nothing is saved until you press <strong>Add Book</strong>.
+                    </p>
+                    <div class="input-group">
+                        <input type="text"
+                               id="ol-query"
+                               class="form-control"
+                               placeholder="Search by title or author, e.g. Dune">
+                        <button type="button" class="btn btn-outline-primary" id="ol-search-btn">
+                            Search
+                        </button>
+                    </div>
+                    <div id="ol-status" class="small mt-2"></div>
+                    <div id="ol-results" class="list-group mt-2"></div>
+                </div>
+
                 <form action="{{ route('admin.books.store') }}"
                       method="POST"
                       enctype="multipart/form-data">
 
                     @csrf
+
+                    <input type="hidden" name="cover_image_url" id="cover_image_url" value="{{ old('cover_image_url') }}">
+                    <input type="hidden" name="open_library_key" id="open_library_key" value="{{ old('open_library_key') }}">
 
                     <div class="row">
                         <div class="col-md-8">
@@ -134,6 +158,14 @@
                                 @error('cover_image')
                                     <div class="text-danger small mt-1">{{ $message }}</div>
                                 @enderror
+                                <div id="ol-cover-preview" class="mt-2 d-none">
+                                    <img src="" alt="Cover preview" style="height:90px" class="rounded border">
+                                    <div class="small text-muted mt-1">
+                                        Cover from Open Library.
+                                        <a href="#" id="ol-cover-clear">Remove</a>
+                                        — or upload a file above to use that instead.
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -207,4 +239,227 @@
     </div>
 </div>
 
+@endsection
+
+@section('scripts')
+<script>
+(function () {
+    const lookupUrl  = @json(route('admin.books.lookup'));
+    const queryInput = document.getElementById('ol-query');
+    const searchBtn  = document.getElementById('ol-search-btn');
+    const statusBox  = document.getElementById('ol-results');
+    const statusMsg  = document.getElementById('ol-status');
+
+    const titleEl    = document.getElementById('title');
+    const yearEl     = document.getElementById('published_year');
+    const descEl     = document.getElementById('description');
+    const authorsEl  = document.getElementById('authors');
+    const catsEl     = document.getElementById('categories');
+    const coverUrlEl = document.getElementById('cover_image_url');
+    const olKeyEl    = document.getElementById('open_library_key');
+    const previewBox = document.getElementById('ol-cover-preview');
+
+    function setStatus(text, cls) {
+        statusMsg.className = 'small mt-2 ' + (cls || 'text-muted');
+        statusMsg.textContent = text || '';
+    }
+
+    // Select an <option> whose text matches the given name (case-insensitive).
+    // Returns true if a match was found, so we can warn about missing ones.
+    function selectByName(selectEl, name) {
+        if (!selectEl || !name) return false;
+        const target = name.trim().toLowerCase();
+        for (const opt of selectEl.options) {
+            if (opt.text.trim().toLowerCase() === target) {
+                opt.selected = true;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    let searchGeneration = 0;
+
+    async function runSearch() {
+        const q = queryInput.value.trim();
+        if (!q) return;
+
+        // Guard against overlapping requests (e.g. the page auto-running a
+        // search from URL params while the admin also clicks Search): only
+        // the most recently started request is allowed to touch the UI.
+        const myGeneration = ++searchGeneration;
+
+        statusBox.innerHTML = '';
+        setStatus('Searching Open Library…');
+        searchBtn.disabled = true;
+
+        try {
+            // Open Library can be slow on a cold request — give it real time
+            // before giving up, and let the request be aborted cleanly if
+            // it does run out the clock.
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+            const res = await fetch(`${lookupUrl}?q=${encodeURIComponent(q)}`, {
+                headers: { 'Accept': 'application/json' },
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (myGeneration !== searchGeneration) return; // a newer search superseded this one
+
+            if (res.status === 401 || res.status === 419) {
+                setStatus('Your admin session expired — refresh the page and log in again.', 'text-danger');
+                return;
+            }
+            if (!res.ok) {
+                console.error('Open Library lookup: server returned', res.status, await res.text());
+                setStatus(`Lookup failed (server returned ${res.status}). You can still fill the form in manually.`, 'text-danger');
+                return;
+            }
+
+            const data = await res.json();
+            if (myGeneration !== searchGeneration) return;
+
+            const results = data.results || [];
+
+            if (!results.length) {
+                setStatus('No matches found. You can still fill the form in manually.', 'text-muted');
+                return;
+            }
+
+            setStatus(`${results.length} result(s) — click one to fill the form.`);
+
+            results.forEach(function (r) {
+                const item = document.createElement('button');
+                item.type = 'button';
+                item.className = 'list-group-item list-group-item-action d-flex align-items-center gap-2';
+                item.dataset.key = r.key;
+                item.innerHTML = `
+                    ${r.cover ? `<img src="${r.cover}" style="height:48px" class="rounded">` : ''}
+                    <span class="text-start">
+                        <strong>${r.title}</strong><br>
+                        <span class="text-muted small">
+                            ${(r.authors || []).join(', ') || 'Unknown author'}${r.year ? ' · ' + r.year : ''}
+                        </span>
+                        ${r.already_added ? '<br><span class="badge bg-warning-subtle text-warning">Already in catalogue</span>' : ''}
+                    </span>`;
+                item.addEventListener('click', () => fillForm(r));
+                statusBox.appendChild(item);
+            });
+        } catch (e) {
+            if (myGeneration !== searchGeneration) return; // superseded — ignore its error too
+
+            console.error('Open Library lookup failed:', e);
+
+            const timedOut = e.name === 'AbortError';
+            statusMsg.className = 'small mt-2 text-danger';
+            statusMsg.innerHTML = timedOut
+                ? 'Open Library took too long to respond. This is usually a one-off, not a real outage — '
+                : 'Could not reach the lookup service. Check your connection, or — ';
+            const retryLink = document.createElement('a');
+            retryLink.href = '#';
+            retryLink.textContent = 'try again';
+            retryLink.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                runSearch();
+            });
+            statusMsg.appendChild(retryLink);
+            statusMsg.append(', or fill the form in manually.');
+        } finally {
+            if (myGeneration === searchGeneration) {
+                searchBtn.disabled = false;
+            }
+        }
+    }
+
+    async function fillForm(r) {
+        titleEl.value = r.title || '';
+        yearEl.value  = r.year || '';
+        olKeyEl.value = r.key || '';
+
+        if (r.cover) {
+            coverUrlEl.value = r.cover;
+            previewBox.querySelector('img').src = r.cover;
+            previewBox.classList.remove('d-none');
+        }
+
+        const missing = [];
+
+        const authorName = (r.authors || [])[0];
+        if (authorName) {
+            Array.from(authorsEl.options).forEach(o => o.selected = false);
+            if (!selectByName(authorsEl, authorName)) {
+                missing.push(`author “${authorName}”`);
+            }
+        }
+
+        setStatus('Fetching description…');
+
+        try {
+            const res = await fetch(`${lookupUrl}?key=${encodeURIComponent(r.key)}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            const details = await res.json();
+
+            if (details.description) {
+                descEl.value = details.description;
+            }
+
+            if (details.suggested_category) {
+                Array.from(catsEl.options).forEach(o => o.selected = false);
+                if (!selectByName(catsEl, details.suggested_category)) {
+                    missing.push(`category “${details.suggested_category}”`);
+                }
+            }
+        } catch (e) {
+            // description is optional — the rest of the form is still filled
+        }
+
+        if (missing.length) {
+            setStatus(
+                `Filled in. Note: ${missing.join(' and ')} doesn't exist yet — create it first, or pick another from the lists below.`,
+                'text-warning'
+            );
+        } else {
+            setStatus('Filled in. Review the fields, then press Add Book.', 'text-success');
+        }
+
+        statusBox.innerHTML = '';
+        titleEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    searchBtn.addEventListener('click', runSearch);
+    queryInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();   // don't submit the book form
+            runSearch();
+        }
+    });
+
+    document.getElementById('ol-cover-clear').addEventListener('click', function (e) {
+        e.preventDefault();
+        coverUrlEl.value = '';
+        previewBox.classList.add('d-none');
+    });
+
+    // Arriving from an "Add to library" suggestion on the public search
+    // page: pre-fill the lookup box and run it straight away.
+    const params = new URLSearchParams(window.location.search);
+    const presetTitle = params.get('title');
+    const presetKey = params.get('ol');
+
+    if (presetTitle) {
+        queryInput.value = presetTitle;
+        runSearch().then(function () {
+            if (!presetKey) return;
+            // auto-pick the exact work that was clicked, if it came back
+            const match = Array.from(statusBox.children).find(
+                el => el.dataset.key === presetKey
+            );
+            if (match) match.click();
+        });
+    }
+})();
+</script>
 @endsection
