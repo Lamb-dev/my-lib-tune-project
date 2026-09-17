@@ -103,14 +103,22 @@ class OpenLibraryService
                 ? $this->categoryFromSubjects($doc['subject'])
                 : $fallbackCategoryId;
 
+            $isPublicDomain = $this->isPublicDomain($doc);
+            $copyrightStatus = $isPublicDomain ? 'public_domain' : 'copyrighted';
+            $readingUrl = null;
+
+            if ($isPublicDomain) {
+                $readingUrl = $this->getReadableUrl($doc['key']);
+            }
+
             $book = Book::firstOrCreate(
                 ['open_library_key' => $doc['key']],
                 [
                     'title' => $doc['title'],
                     'published_year' => $doc['first_publish_year'] ?? null,
                     'cate_id' => $categoryId,
-                    'copyright_status' => 'copyrighted',
-                    'reading_url' => null,
+                    'copyright_status' => $copyrightStatus,
+                    'reading_url' => $readingUrl,
                     'cover_image' => $this->coverUrl($doc['cover_i'] ?? null),
                 ]
             );
@@ -129,6 +137,62 @@ class OpenLibraryService
 
             return $book;
         })->filter();
+    }
+
+    /**
+     * Get a readable URL (EPUB or PDF) for a work by checking its editions and
+     * querying the Internet Archive for a full-text copy.
+     *
+     * @param string $workKey
+     * @return string|null
+     */
+    public function getReadableUrl(string $workKey): ?string
+    {
+        try {
+            $response = Http::timeout(5)->get("https://openlibrary.org{$workKey}/editions.json", ['limit' => 20]);
+            if (! $response->successful()) {
+                return null;
+            }
+            $editions = $response->json('entries', []);
+            foreach ($editions as $edition) {
+                $identifiers = $edition['identifiers'] ?? [];
+                $isbn = null;
+                if (!empty($identifiers['isbn_10'])) {
+                    $isbn = $identifiers['isbn_10'][0];
+                } elseif (!empty($identifiers['isbn_13'])) {
+                    $isbn = $identifiers['isbn_13'][0];
+                }
+                if ($isbn) {
+                    $iaResponse = Http::timeout(8)->get(
+                        "https://archive.org/advancedsearch.php",
+                        [
+                            'q' => 'isbn:' . $isbn . ' AND mediatype:texts',
+                            'fl' => 'identifier,format',
+                            'rows' => '5',
+                            'output' => 'json'
+                        ]
+                    );
+                    if ($iaResponse->successful()) {
+                        $docs = $iaResponse->json('response.docs', []);
+                        foreach ($docs as $doc) {
+                            $formats = $doc['format'] ?? [];
+                            if (is_array($formats) && in_array('EPUB', $formats, true)) {
+                                $identifier = $doc['identifier'];
+                                return "https://archive.org/download/{$identifier}/{$identifier}_epub.epub";
+                            }
+                            elseif (is_array($formats) && in_array('PDF', $formats, true)) {
+                                $identifier = $doc['identifier'];
+                                return "https://archive.org/download/{$identifier}/{$identifier}.pdf";
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        } catch (\Throwable $e) {
+            Log::warning('Failed to get readable URL for work ' . $workKey . ': ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**
