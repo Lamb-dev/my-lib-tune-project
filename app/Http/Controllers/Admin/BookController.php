@@ -82,6 +82,10 @@ class BookController extends Controller
                 'year' => $doc['first_publish_year'] ?? null,
                 'cover' => $openLibrary->coverUrl($doc['cover_i'] ?? null),
                 'already_added' => Book::where('open_library_key', $doc['key'])->exists(),
+                'is_public_domain' => $openLibrary->isPublicDomain($doc),
+                'reading_url' => $openLibrary->isPublicDomain($doc)
+                    ? $openLibrary->readingUrlFromDoc($doc)
+                    : null,
             ])
             ->values();
 

@@ -258,6 +258,8 @@
     const coverUrlEl = document.getElementById('cover_image_url');
     const olKeyEl    = document.getElementById('open_library_key');
     const previewBox = document.getElementById('ol-cover-preview');
+    const copyrightEl = document.getElementById('copyright_status');
+    const readingUrlEl = document.getElementById('reading_url');
 
     function setStatus(text, cls) {
         statusMsg.className = 'small mt-2 ' + (cls || 'text-muted');
@@ -343,6 +345,7 @@
                             ${(r.authors || []).join(', ') || 'Unknown author'}${r.year ? ' · ' + r.year : ''}
                         </span>
                         ${r.already_added ? '<br><span class="badge bg-warning-subtle text-warning">Already in catalogue</span>' : ''}
+                        ${r.is_public_domain ? '<br><span class="badge bg-success-subtle text-success">Public domain · reading link available</span>' : ''}
                     </span>`;
                 item.addEventListener('click', () => fillForm(r));
                 statusBox.appendChild(item);
@@ -384,6 +387,16 @@
             previewBox.classList.remove('d-none');
         }
 
+        // Only touch these when Open Library actually gives us a real,
+        // working reading link — never guess "public domain" from
+        // publish year alone, and never blank out a value the admin
+        // might have already typed if this result turns out not to
+        // qualify.
+        if (r.is_public_domain && r.reading_url) {
+            copyrightEl.value = 'public_domain';
+            readingUrlEl.value = r.reading_url;
+        }
+
         const missing = [];
 
         const authorName = (r.authors || [])[0];
@@ -416,13 +429,17 @@
             // description is optional — the rest of the form is still filled
         }
 
+        const pdNote = (r.is_public_domain && r.reading_url)
+            ? ' Marked public domain with a reading link filled in — double-check it opens correctly before saving.'
+            : '';
+
         if (missing.length) {
             setStatus(
-                `Filled in. Note: ${missing.join(' and ')} doesn't exist yet — create it first, or pick another from the lists below.`,
+                `Filled in. Note: ${missing.join(' and ')} doesn't exist yet — create it first, or pick another from the lists below.${pdNote}`,
                 'text-warning'
             );
         } else {
-            setStatus('Filled in. Review the fields, then press Add Book.', 'text-success');
+            setStatus(`Filled in. Review the fields, then press Add Book.${pdNote}`, 'text-success');
         }
 
         statusBox.innerHTML = '';

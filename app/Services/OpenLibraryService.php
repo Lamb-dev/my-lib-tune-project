@@ -14,10 +14,10 @@ class OpenLibraryService
     public function search(string $query, int $limit = 10): array
     {
         try {
-            $response = Http::timeout(15)->retry(2, 300)->get('https://openlibrary.org/search.json', [
+            $response = Http::timeout(12)->retry(2, 300)->get('https://openlibrary.org/search.json', [
                 'q' => $query,
                 'limit' => $limit,
-                'fields' => 'key,title,author_name,first_publish_year,cover_i,subject',
+                'fields' => 'key,title,author_name,first_publish_year,cover_i,subject,ia,ebook_access',
             ]);
 
             return $response->successful() ? $response->json('docs', []) : [];
@@ -30,7 +30,7 @@ class OpenLibraryService
     public function fetchWorkDetails(string $workKey): array
     {
         try {
-            $response = Http::timeout(15)->retry(2, 300)->get("https://openlibrary.org{$workKey}.json");
+            $response = Http::timeout(12)->retry(2, 300)->get("https://openlibrary.org{$workKey}.json");
 
             if (! $response->successful()) {
                 return ['description' => null, 'subjects' => []];
@@ -129,6 +129,31 @@ class OpenLibraryService
 
             return $book;
         })->filter();
+    }
+
+    /**
+     * Open Library's own signal for "can be read in full, for free, right
+     * now" is ebook_access === 'public' (as opposed to 'borrowable',
+     * 'printdisabled', or 'no_ebook'). That's a much more reliable test
+     * than guessing from publish year — plenty of pre-1928 works are
+     * still marked non-public because no scan exists, and some newer
+     * works are genuinely public domain (government publications, CC0).
+     */
+    public function isPublicDomain(array $doc): bool
+    {
+        return ($doc['ebook_access'] ?? null) === 'public';
+    }
+
+    /**
+     * A direct, working link to read the book, built from its Internet
+     * Archive identifier. Only meaningful when isPublicDomain() is true —
+     * a borrowable-only book would just send readers to a login wall.
+     */
+    public function readingUrlFromDoc(array $doc): ?string
+    {
+        $identifier = $doc['ia'][0] ?? null;
+
+        return $identifier ? "https://archive.org/details/{$identifier}" : null;
     }
 
     public function coverUrl(?int $coverId, string $size = 'L'): ?string
