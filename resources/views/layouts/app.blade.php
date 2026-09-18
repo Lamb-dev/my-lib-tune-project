@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="library-url" content="{{ route('library.index') }}">
     <title>@yield('title', 'Lib-Tune') · Lib-Tune</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +13,7 @@
     <link rel="stylesheet" href="{{ asset('css/libtune.css') }}">
     @stack('styles')
 </head>
-<body>
+<body data-page="{{ Route::currentRouteName() }}">
     <div class="site-shell">
         <header class="topbar">
             <a class="brand" href="{{ route('dashboard') }}" aria-label="Lib-Tune home">
@@ -27,6 +28,9 @@
             <nav class="top-actions">
                 <a href="{{ route('books.search') }}" class="nav-link">Browse</a>
                 @auth
+                    <a href="{{ route('library.index') }}" class="nav-link nav-link-icon" title="My Library">
+                        <i class="fa-solid fa-bookmark"></i> My Library
+                    </a>
                     <a href="{{ route('profile.edit') }}" class="avatar" title="Profile">{{ strtoupper(substr(auth()->user()->username, 0, 1)) }}</a>
                     <form method="POST" action="{{ route('logout') }}" class="inline-form">@csrf<button class="icon-btn" title="Sign out"><i class="fa-solid fa-arrow-right-from-bracket"></i></button></form>
                 @else
@@ -34,20 +38,15 @@
                     <a class="button button-dark button-small" href="{{ route('register') }}">Join</a>
                 @endauth
             </nav>
-
-            <nav class="top-actions-mobile">
-                <a href="{{ route('aboutus') }}" class="nav-link">About</a>
-            </nav>
-
         </header>
- 
+
         <main>
             @if(session('status'))
                 <div class="toast"><i class="fa-solid fa-circle-check"></i>{{ session('status') }}</div>
             @endif
             @yield('content')
         </main>
- 
+
         <footer class="footer">
             <div><span class="brand-footer">Lib-Tune</span><span> A quiet place for curious readers.</span></div>
             <div>Public-domain & non-copyrighted reading · {{ date('Y') }}</div>

@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   const token = document.querySelector('meta[name="csrf-token"]')?.content;
+  const libraryUrl = document.querySelector('meta[name="library-url"]')?.content;
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // ---------------------------------------------------------------
@@ -7,12 +8,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // showToast('message', 'fa-solid fa-icon') and it slides in, sits
   // for a few seconds, then slides back out on its own.
   // ---------------------------------------------------------------
-  function showToast(message, icon = 'fa-solid fa-circle-check') {
+  function showToast(message, icon = 'fa-solid fa-circle-check', action = null) {
     document.querySelectorAll('.toast').forEach(t => t.remove());
 
     const toast = document.createElement('div');
     toast.className = 'toast';
-    toast.innerHTML = `<i class="${icon}"></i>${message}`;
+    toast.innerHTML = `<i class="${icon}"></i><span>${message}</span>`;
+
+    if (action) {
+      const link = document.createElement('a');
+      link.href = action.url;
+      link.className = 'toast-action';
+      link.textContent = action.text;
+      toast.appendChild(link);
+    }
+
     document.body.appendChild(toast);
 
     requestAnimationFrame(() => toast.classList.add('toast-show'));
@@ -21,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
       toast.classList.remove('toast-show');
       toast.addEventListener('transitionend', () => toast.remove(), { once: true });
       setTimeout(() => toast.remove(), 500); // fallback if transitionend doesn't fire
-    }, 3200);
+    }, 4200);
   }
 
   // A flashed session('status') message arrives as static HTML on page
@@ -108,16 +118,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await res.json();
       paintSaveButton(btn, data.saved);
+
+      const onLibraryPage = document.body.dataset.page === 'library.index';
       showToast(
         data.saved ? 'Added to your library.' : 'Removed from your library.',
-        data.saved ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark'
+        data.saved ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark',
+        // Only offer the "View library" link when it's actually useful —
+        // not when the person saving is already standing on that page.
+        (data.saved && libraryUrl && !onLibraryPage)
+          ? { text: 'View library', url: libraryUrl }
+          : null
       );
 
       // On the My Library page itself, an unsaved book no longer
       // belongs in the grid — fade the whole card out rather than
       // leaving a "saved-looking" page with an unsaved book sitting
       // in it.
-      if (!data.saved && document.body.dataset.page === 'library.index') {
+      if (!data.saved && onLibraryPage) {
         const card = btn.closest('[data-book-card]');
         if (card) {
           if (prefersReducedMotion) {
