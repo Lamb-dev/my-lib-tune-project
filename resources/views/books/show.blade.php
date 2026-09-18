@@ -31,7 +31,7 @@
                         aria-pressed="{{ $isSaved ? 'true' : 'false' }}">
                     <i class="fa-{{ $isSaved ? 'solid' : 'regular' }} fa-bookmark"></i> {{ $isSaved ? 'Saved' : 'Save' }}
                 </button>
-                <span class="save-confirm" data-save-confirm><i class="fa-solid fa-check"></i> Added to your library</span>
+                <a href="{{ route('library.index') }}" class="save-confirm" data-save-confirm><i class="fa-solid fa-check"></i> Added to your library</a>
             @endauth</div>
             <div class="book-facts"><div><span>AUTHOR</span>{{ $book->authorNames() }}</div><div><span>YEAR</span>{{ $book->published_year ?? 'Unknown' }}</div><div><span>FORMAT</span>{{ $book->isReadable() ? 'EPUB · Online' : 'Catalogue only' }}</div></div>
         </div>
