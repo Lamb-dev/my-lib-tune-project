@@ -26,12 +26,28 @@ class AuthorController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required', 'string', 'max:255',
+                function ($attribute, $value, $fail) {
+                    $exists = Author::whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim($value))])
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('An author with this name already exists. Check the list before adding a new one.');
+                    }
+                },
+            ],
             'biography' => 'nullable|string',
             'birth_date' => 'nullable|date_format:Y-m-d',
             'nationality' => 'nullable|string|max:100',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
+
+        // Normalize the stored value too — validation catches "Jane Austen"
+        // vs "jane austen ", but without trimming here the sloppy version
+        // could still be the one saved to the database.
+        $validated['name'] = trim($validated['name']);
+
           if ($request->hasFile('photo')) {
             $validated['photo'] = $request->file('photo')
                 ->store('authors', 'public');
@@ -52,12 +68,26 @@ class AuthorController extends Controller
     public function update(Request $request, Author $author)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required', 'string', 'max:255',
+                function ($attribute, $value, $fail) use ($author) {
+                    $exists = Author::whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim($value))])
+                        ->where('auth_id', '!=', $author->auth_id)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('Another author with this name already exists.');
+                    }
+                },
+            ],
             'biography' => 'nullable|string',
             'birth_date' => 'nullable|date_format:Y-m-d',
             'nationality' => 'nullable|string|max:100',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
+
+        $validated['name'] = trim($validated['name']);
+
            if ($request->hasFile('photo')) {
 
             if ($author->photo) {

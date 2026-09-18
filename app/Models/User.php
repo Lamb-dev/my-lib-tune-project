@@ -51,6 +51,19 @@ class User extends Authenticatable
         'book_id'
     )->withTimestamps();
     }
+
+    /**
+     * Book ids this user has saved, memoized per request. Book cards
+     * across the catalogue, homepage, and search results all need this
+     * to draw the save button state — without memoizing, rendering a
+     * grid of 20 cards would run 20 identical queries.
+     */
+    private ?array $cachedSavedBookIds = null;
+
+    public function savedBookIds(): array
+    {
+        return $this->cachedSavedBookIds ??= $this->savedBooks()->pluck('books.book_id')->all();
+    }
     public function progress(): HasMany
     {
         return $this->hasMany(ProgressBook::class, 'user_id', 'user_id');

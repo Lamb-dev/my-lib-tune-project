@@ -83,6 +83,22 @@ class OpenLibraryService
     }
 
     /**
+     * Open Library returns author names with whatever casing/spacing the
+     * original catalog entry used, which can easily drift from a name an
+     * admin already entered by hand ("J.K. Rowling" vs "J. K. Rowling").
+     * A plain firstOrCreate() does an exact match and would happily create
+     * a near-duplicate author row for a difference no reader would ever
+     * notice — so this checks case- and whitespace-insensitively first.
+     */
+    private function findOrCreateAuthor(string $name): Author
+    {
+        $normalized = trim($name);
+
+        return Author::whereRaw('LOWER(TRIM(name)) = ?', [strtolower($normalized)])->first()
+            ?? Author::create(['name' => $normalized]);
+    }
+
+    /**
      * Turn Open Library search results into local Book rows. Authors are
      * attached via the book_authors pivot (not a single auth_id column),
      * matching the current schema. Imported books default to
@@ -97,7 +113,7 @@ class OpenLibraryService
             }
 
             $authorName = $doc['author_name'][0] ?? 'Unknown author';
-            $authorId = Author::firstOrCreate(['name' => $authorName])->auth_id;
+            $authorId = $this->findOrCreateAuthor($authorName)->auth_id;
 
             $categoryId = ! empty($doc['subject'])
                 ? $this->categoryFromSubjects($doc['subject'])
