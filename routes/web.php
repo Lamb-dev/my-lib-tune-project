@@ -8,6 +8,7 @@ use App\Services\OpenLibraryService;
 use App\Http\Controllers\BookReaderController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SavedBookController;
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -29,19 +30,45 @@ use App\Http\Controllers\Admin\BookCategoryController;
 Route::get('/', fn () => redirect()->route('dashboard'));
 
 Route::get('/dashboard', function () {
-    $popular = Book::with(['authors', 'category'])
+    $popular = Book::with(['authors', 'categories'])
         ->withCount('ratings')
         ->orderByDesc('published_year')
         ->limit(5)
         ->get();
 
-    $recent = Book::with(['authors', 'category'])
+    $recent = Book::with(['authors', 'categories'])
         ->withCount('ratings')
         ->latest()
         ->limit(5)
         ->get();
 
-    return view('dashboard', compact('popular', 'recent'));
+    $continueReading = collect();
+    $recentlySaved = collect();
+
+    if (auth()->check()) {
+        // Books this reader has actually opened before, most recently
+        // opened first. last_read holds an epub CFI (a location marker,
+        // not a percentage), so this is a "pick up where you left off"
+        // list rather than a progress bar — we don't fabricate a percent
+        // we can't actually measure.
+        $continueReading = \App\Models\ProgressBook::where('user_id', auth()->id())
+            ->whereHas('book', fn ($q) => $q->where('is_archived', false))
+            ->with(['book.authors', 'book.categories'])
+            ->latest('updated_at')
+            ->limit(4)
+            ->get()
+            ->pluck('book')
+            ->filter();
+
+        $recentlySaved = auth()->user()
+            ->savedBooks()
+            ->with(['authors', 'categories'])
+            ->orderByPivot('created_at', 'desc')
+            ->limit(6)
+            ->get();
+    }
+
+    return view('dashboard', compact('popular', 'recent', 'continueReading', 'recentlySaved'));
 })->name('dashboard');
 
 /*
@@ -81,7 +108,7 @@ Route::middleware('auth')->group(function () {
 Route::get('/search', [BookController::class, 'search'])->name('books.search');
 
 Route::get('/books/{book}', function (Book $book, OpenLibraryService $openLibrary) {
-    $book->load(['authors', 'category']);
+    $book->load(['authors', 'categories']);
 
     if ($book->open_library_key && (! $book->description || ! $book->cate_id)) {
         $details = $openLibrary->fetchWorkDetails($book->open_library_key);
@@ -98,12 +125,26 @@ Route::get('/books/{book}', function (Book $book, OpenLibraryService $openLibrar
         }
     }
 
-    return view('books.show', compact('book'));
+    // "More by this author" — anything else sharing at least one author
+    // with this book, freshest first. Skipped entirely (not queried) when
+    // the book has no authors, rather than showing an empty section.
+    $moreByAuthor = $book->authors->isEmpty()
+        ? collect()
+        : Book::with(['authors', 'categories'])
+            ->whereHas('authors', fn ($q) => $q->whereIn('authors.auth_id', $book->authors->pluck('auth_id')))
+            ->where('book_id', '!=', $book->book_id)
+            ->where('is_archived', false)
+            ->latest('book_id')
+            ->limit(4)
+            ->get();
+
+    return view('books.show', compact('book', 'moreByAuthor'));
 })->name('books.show');
 
 Route::get('/books/{book}/reviews', [BookController::class, 'getReviews'])->name('books.reviews');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/library', [SavedBookController::class, 'index'])->name('library.index');
     Route::get('/books/{book}/read', [BookReaderController::class, 'read'])->name('books.read');
     Route::get('/books/{book}/file', [BookReaderController::class, 'stream'])->name('books.file');
     Route::post('/books/{book}/progress', [BookReaderController::class, 'saveProgress'])->name('books.progress');
@@ -111,17 +152,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/books/{book}/upload-epub', [BookController::class, 'uploadEpub'])->name('books.upload-epub');
 
     Route::post('/books/{book}/save', function (Book $book) {
-        $saved = auth()->user()->savedBooks()->where('book_id', $book->book_id)->exists();
+        // toggle() attaches/detaches the pivot row only — it never touches
+        // the books table itself. The previous version used
+        // ->where('book_id', ...)->delete() on the belongsToMany relation,
+        // which operates on the *related model's* table (books), not the
+        // pivot, and book_id exists on both tables — ambiguous at best,
+        // and one bad day away from deleting real catalogue rows.
+        $result = auth()->user()->savedBooks()->toggle($book->book_id);
 
-        if ($saved) {
-            auth()->user()->savedBooks()->where('book_id', $book->book_id)->delete();
-            $saved = false;
-        } else {
-            auth()->user()->savedBooks()->create(['book_id' => $book->book_id]);
-            $saved = true;
-        }
-
-        return response()->json(['saved' => $saved]);
+        return response()->json(['saved' => ! empty($result['attached'])]);
     })->name('books.save');
 });
 
