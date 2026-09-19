@@ -3,121 +3,103 @@
 @section('title', 'About Us')
 
 @section('content')
-    <div class="container">
-        <h1 style="text-align: center; margin-top: 50px;">About Us</h1><br>
-        <p>Lib-Tune is a free internet library where our mission is to give unlimited access to many various of books for people who love reading and also for people who want to get started on their reading journey.</p>
-    </div>
 
-    <h2 style="text-align:center">Our Team</h2>
-<div class="row">
-  <div class="column">
-    <div class="card">
-      <img src="/w3images/team1.jpg" alt="Jane" style="width:100%">
-      <div class="container">
-        <h2>Jane Doe</h2>
-        <p class="title">CEO & Founder</p>
-        <p>Some text that describes me lorem ipsum ipsum lorem.</p>
-        <p>jane@example.com</p>
-        <p><button class="button">Contact</button></p>
-      </div>
-    </div>
-  </div>
+<header class="about-hero">
+    <p class="eyebrow">OUR STORY</p>
+    <h1>About <em>Lib&#8209;Tune</em></h1>
+    <p>
+        Lib-Tune started as a small side project with one goal: make it easy to find and read
+        public-domain and non-copyrighted books without ads, paywalls, or a cluttered interface.
+        No subscriptions, no tracking your reading habits for marketing &mdash; just a clean shelf,
+        a reader that remembers your place, and a catalogue that keeps growing.
+    </p>
+</header>
 
-  <div class="column">
-    <div class="card">
-      <img src="/w3images/team2.jpg" alt="Mike" style="width:100%">
-      <div class="container">
-        <h2>Mike Ross</h2>
-        <p class="title">Art Director</p>
-        <p>Some text that describes me lorem ipsum ipsum lorem.</p>
-        <p>mike@example.com</p>
-        <p><button class="button">Contact</button></p>
-      </div>
+<div class="stat-grid">
+    <div>
+        <strong>{{ $stats['books'] }}</strong>
+        <span>Books in the Collection</span>
     </div>
-  </div>
-
-  <div class="column">
-    <div class="card">
-      <img src="/w3images/team3.jpg" alt="John" style="width:100%">
-      <div class="container">
-        <h2>John Doe</h2>
-        <p class="title">Designer</p>
-        <p>Some text that describes me lorem ipsum ipsum lorem.</p>
-        <p>john@example.com</p>
-        <p><button class="button">Contact</button></p>
-      </div>
+    <div>
+        <strong>{{ $stats['authors'] }}</strong>
+        <span>Authors Represented</span>
     </div>
-  </div>
+    <div>
+        <strong>{{ $stats['categories'] }}</strong>
+        <span>Categories to Explore</span>
+    </div>
 </div>
 
-<style>
-body {
-  font-family: Arial, Helvetica, sans-serif;
-  margin: 0;
-}
+<section class="section-tight">
+    <div class="section-head" style="justify-content:center;text-align:center;display:block">
+        <h2>What you can do here</h2>
+    </div>
 
-html {
-  box-sizing: border-box;
-}
+    <div class="feature-grid">
+        <div class="feature-card">
+            <i class="fa-solid fa-book-open"></i>
+            <h3>Read, distraction-free</h3>
+            <p>Every book opens in a built-in reader that picks up right where you left off &mdash; no downloads, no extra apps.</p>
+        </div>
+        <div class="feature-card">
+            <i class="fa-solid fa-bookmark"></i>
+            <h3>Build your own shelf</h3>
+            <p>Save anything that catches your eye to My Library and come back to it whenever you're ready.</p>
+        </div>
+        <div class="feature-card">
+            <i class="fa-solid fa-star"></i>
+            <h3>Rate and review</h3>
+            <p>Leave a rating and a few words on books you've finished, and see what other readers thought too.</p>
+        </div>
+    </div>
+</section>
 
-*, *:before, *:after {
-  box-sizing: inherit;
-}
+<section class="section-tight">
+    <div class="section-head" style="justify-content:center;text-align:center;display:block">
+        <h2>Our Team</h2>
+        <p class="hero-sub" style="margin:14px auto 0;text-align:center">A small team keeping the shelves organized and the reader running smoothly.</p>
+    </div>
 
-.column {
-  float: left;
-  width: 33.3%;
-  margin-bottom: 16px;
-  padding: 0 8px;
-}
+@php
+    // Drop a photo into public/images/team/ using the exact filename
+    // below and it replaces the initials automatically — no template
+    // changes needed. Recommended: a square image, at least 200x200px.
+    $team = [
+        [
+            'name' => 'Pich chansereysophea', 'role' => 'Founder', 'initials' => 'PC',
+            'email' => 'jane@example.com', 'photo' => 'images/team/jane-doe.jpg',
+            'bio' => 'Started Lib-Tune after one too many library apps buried in ads. Handles the roadmap and the catalogue.',
+        ],
+        [
+            'name' => 'Sarin Sereisatha', 'role' => 'Front-End Developer', 'initials' => 'SS',
+            'email' => 'mike@example.com', 'photo' => 'images/team/mike-ross.jpg',
+            'bio' => 'Designs the reading experience — covers, layout, and the little details that make a page feel calm.',
+        ],
+        [
+            'name' => 'Rattana Sambath Ratanak', 'role' => 'Backend Developer', 'initials' => 'RSR',
+            'email' => 'john@example.com', 'photo' => 'images/team/john-doe.jpg',
+            'bio' => "Works on the reader and the admin tools, and hunts down whatever's making the site feel clunky.",
+        ],
+    ];
+@endphp
 
-.card {
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-  margin: 8px;
-}
+<div class="team-grid">
+    @foreach($team as $member)
+        <div class="team-card">
+            <div class="team-avatar">
+                @if(file_exists(public_path($member['photo'])))
+                    <img src="{{ asset($member['photo']) }}" alt="{{ $member['name'] }}">
+                @else
+                    {{ $member['initials'] }}
+                @endif
+            </div>
+            <h3>{{ $member['name'] }}</h3>
+            <p class="team-role">{{ $member['role'] }}</p>
+            <p>{{ $member['bio'] }}</p>
+            <a href="mailto:{{ $member['email'] }}" class="button button-outline button-small button-full">Contact</a>
+        </div>
+    @endforeach
+</div>
+</section>
 
-.about-section {
-  padding: 50px;
-  text-align: center;
-  background-color: #474e5d;
-  color: white;
-}
-
-.container {
-  padding: 0 16px;
-}
-
-.container::after, .row::after {
-  content: "";
-  clear: both;
-  display: table;
-}
-
-.title {
-  color: grey;
-}
-
-.button {
-  border: none;
-  outline: 0;
-  display: inline-block;
-  padding: 8px;
-  color: white;
-  background-color: #000;
-  text-align: center;
-  cursor: pointer;
-  width: 100%;
-}
-
-.button:hover {
-  background-color: #555;
-}
-
-@media screen and (max-width: 650px) {
-  .column {
-    width: 100%;
-    display: block;
-  }
-}
-</style>
 @endsection

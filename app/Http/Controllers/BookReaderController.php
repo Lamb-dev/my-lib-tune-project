@@ -15,7 +15,7 @@ class BookReaderController extends Controller
      */
     public function read(Book $book)
     {
-        abort_unless($book->isReadable(), 403, 'This book is not available to read online.');
+        abort_unless($book->hasEpubFile(), 403, 'This book has no reader file available — try "View source link" on its page instead.');
 
         $progress = ProgressBook::where('user_id', auth()->id())
             ->where('book_id', $book->book_id)
@@ -39,8 +39,7 @@ class BookReaderController extends Controller
      */
     public function stream(Book $book)
     {
-        abort_unless($book->isReadable(), 403, 'This book is not available to read online.');
-        abort_unless(Storage::disk('local')->exists($book->file_path), 404, 'Book file not found.');
+        abort_unless($book->hasEpubFile(), 404, 'Book file not found.');
 
         return Storage::disk('local')->response($book->file_path, null, [
             'Content-Type' => 'application/epub+zip',
@@ -53,7 +52,7 @@ class BookReaderController extends Controller
      */
     public function saveProgress(Request $request, Book $book)
     {
-        abort_unless($book->isReadable(), 403);
+        abort_unless($book->hasEpubFile(), 403);
 
         $validated = $request->validate([
             'cfi' => 'required|string',

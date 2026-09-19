@@ -90,6 +90,20 @@ class Book extends Model
             && (! empty($this->file_path) || ! empty($this->reading_url));
     }
 
+    /**
+     * Specifically: does this book have an .epub file we can stream
+     * through our own in-browser reader? isReadable() alone isn't enough
+     * to decide this — a book can be "readable" purely via an external
+     * reading_url with no file_path at all, in which case the internal
+     * reader has nothing to load and just renders blank.
+     */
+    public function hasEpubFile(): bool
+    {
+        return $this->copyright_status === 'public_domain'
+            && ! empty($this->file_path)
+            && \Illuminate\Support\Facades\Storage::disk('local')->exists($this->file_path);
+    }
+
     public function averageRating(): float
     {
         return round((float) $this->ratings()->avg('score'), 1);

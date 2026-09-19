@@ -73,8 +73,14 @@
                     <form action="{{ route('admin.settings.logo.destroy') }}" method="POST">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-link text-danger px-0"
-                                onclick="return confirm('Remove the custom logo and go back to the default?')">
+                        <button type="button" class="btn btn-link text-danger px-0"
+                                onclick="return confirmAction(this, {
+                                    title: 'Remove custom logo?',
+                                    text: \"You'll go back to the default logo until you upload a new one.\",
+                                    icon: 'warning',
+                                    confirmButtonText: 'Yes, remove it',
+                                    confirmButtonClass: 'btn btn-danger'
+                                })">
                             Remove custom logo
                         </button>
                     </form>

@@ -2,6 +2,28 @@
 
 @section('content')
 
+@if(session('new_admin_password'))
+    <div class="alert alert-warning border-warning d-flex align-items-start gap-3 mb-4" role="alert">
+        <i class="iconoir-shield-alert fs-3 text-warning mt-1"></i>
+        <div>
+            <h5 class="alert-heading mb-1">New admin password — shown once</h5>
+            <p class="mb-2">
+                This is only ever displayed here, right now. It isn't emailed, logged, or stored anywhere
+                in readable form — if you navigate away without copying it, it's gone for good and you'll
+                need to reset it instead.
+            </p>
+            <div class="d-flex flex-wrap gap-3 align-items-center">
+                <div><span class="text-muted small">Admin login email</span><br><code>{{ session('new_admin_email') }}</code></div>
+                <div><span class="text-muted small">Temporary password</span><br><code class="fs-5">{{ session('new_admin_password') }}</code></div>
+            </div>
+            <p class="small text-muted mb-0 mt-2">
+                Hand this to them directly (in person, or over a channel you already trust) and have them
+                change it the moment they log in.
+            </p>
+        </div>
+    </div>
+@endif
+
 <div class="mb-4">
     <h3 class="mb-1">Users</h3>
     <p class="text-muted mb-0">Everyone who has registered a reader account.</p>
@@ -91,6 +113,7 @@
                                     <th>Ratings</th>
                                     <th>Saved Books</th>
                                     <th>Joined</th>
+                                    <th class="text-end">Actions</th>
                                 </tr>
                             </thead>
 
@@ -135,6 +158,38 @@
                                         </td>
 
                                         <td class="text-muted">{{ $user->created_at->format('M d, Y') }}</td>
+
+                                        <td class="text-end">
+                                            @if($user->role === 'admin')
+                                                <form action="{{ route('admin.users.demote', $user) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                                            onclick="return confirmAction(this, {
+                                                                title: 'Revoke admin access?',
+                                                                text: '{{ addslashes($user->username) }} will keep their reader account and everything in it \u2014 they just lose access to the admin panel.',
+                                                                icon: 'warning',
+                                                                confirmButtonText: 'Yes, revoke access',
+                                                                confirmButtonClass: 'btn btn-danger'
+                                                            })">
+                                                        Revoke admin
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <form action="{{ route('admin.users.promote', $user) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                                            onclick="return confirmAction(this, {
+                                                                title: 'Grant full admin access?',
+                                                                text: '{{ addslashes($user->username) }} will be able to add, edit, and delete any book, author, or category, and manage other users\' access \u2014 the same level of control you have. A separate, random admin password will be generated and shown to you once on the next screen.',
+                                                                icon: 'warning',
+                                                                confirmButtonText: 'Yes, make admin',
+                                                                confirmButtonClass: 'btn btn-primary'
+                                                            })">
+                                                        Make admin
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </td>
                                     </tr>
 
                                 @endforeach

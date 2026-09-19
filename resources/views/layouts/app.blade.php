@@ -15,35 +15,36 @@
 </head>
 <body data-page="{{ Route::currentRouteName() }}">
     <div class="site-shell">
-        <header class="topbar">
-            <a class="brand" href="{{ route('dashboard') }}" aria-label="Lib-Tune home">
-                <span class="brand-mark"><i class="fa-solid fa-book-open"></i></span>
-                <span>Lib<span>-</span>Tune</span>
-            </a>
-            <form class="global-search" action="{{ route('books.search') }}" method="GET">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input name="query" value="{{ request('query') }}" placeholder="Search books, authors..." aria-label="Search books">
-                <kbd>⌘ K</kbd>
-            </form>
-            <nav class="top-actions">
-                <a href="{{ route('books.search') }}" class="nav-link">Browse</a>
-                @auth
-                    <a href="{{ route('library.index') }}" class="nav-link nav-link-icon" title="My Library">
-                        <i class="fa-solid fa-bookmark"></i> My Library
-                    </a>
-                    <a href="{{ route('profile.edit') }}" class="avatar" title="Profile">{{ strtoupper(substr(auth()->user()->username, 0, 1)) }}</a>
-                    <form method="POST" action="{{ route('logout') }}" class="inline-form">@csrf<button class="icon-btn" title="Sign out"><i class="fa-solid fa-arrow-right-from-bracket"></i></button></form>
-                @else
-                    <a class="nav-link" href="{{ route('login') }}">Sign in</a>
-                    <a class="button button-dark button-small" href="{{ route('register') }}">Join</a>
-                @endauth
-            </nav>
+<header class="topbar">
+    <a class="brand" href="{{ route('dashboard') }}" aria-label="Lib-Tune home">
+        <span class="brand-mark"><i class="fa-solid fa-book-open"></i></span>
+        <span>Lib<span>-</span>Tune</span>
+    </a>
+    <form class="global-search" action="{{ route('books.search') }}" method="GET">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input name="query" value="{{ request('query') }}" placeholder="Search books, authors..." aria-label="Search books">
+        <kbd>⌘ K</kbd>
+    </form>
+    <nav class="top-actions">
+    @auth
+      <div class="nav-pill-group">
+         <a href="{{ route('books.search') }}" class="nav-link {{ request()->routeIs('books.search') ? 'active' : '' }}">Browse</a>
+         <a href="{{ route('library.index') }}" class="nav-link {{ request()->routeIs('library.index') ? 'active' : '' }}"><i class="fa-solid fa-bookmark"></i> My Library</a>
+         <a href="{{ route('aboutus') }}" class="nav-link {{ request()->routeIs('aboutus') ? 'active' : '' }}">About</a>
+     </div>
+     <a href="{{ route('profile.edit') }}" class="avatar" title="Profile">{{ strtoupper(substr(auth()->user()->username, 0, 1)) }}</a>
+        <form method="POST" action="{{ route('logout') }}" class="inline-form">@csrf<button class="icon-btn" title="Sign out"><i class="fa-solid fa-arrow-right-from-bracket"></i></button></form>
+     @else
+        <div class="nav-pill-group">
+            <a href="{{ route('books.search') }}" class="nav-link {{ request()->routeIs('books.search') ? 'active' : '' }}">Browse</a>
+            <a href="{{ route('aboutus') }}" class="nav-link {{ request()->routeIs('aboutus') ? 'active' : '' }}">About</a>
+        </div>
+        <a class="nav-link" href="{{ route('login') }}">Sign in</a>
+        <a class="button button-dark button-small" href="{{ route('register') }}">Join</a>
+     @endauth
+</nav>
 
-             <nav class="top-actions-mobile">
-                <a href="{{ route('aboutus') }}" class="nav-link">About</a>
-            </nav>
-
-        </header>
+</header>
 
         <main>
             @if(session('status'))

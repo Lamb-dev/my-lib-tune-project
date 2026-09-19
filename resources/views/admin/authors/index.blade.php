@@ -84,7 +84,7 @@
 
                                             <button type="submit"
                                                     class="btn btn-sm btn-danger"
-                                                    onclick="return confirm('Are you sure you want to delete this author?')">
+                                                    onclick="return confirmDelete(this, '{{ addslashes($author->name) }}')">
                                                 Delete
                                             </button>
                                         </form>

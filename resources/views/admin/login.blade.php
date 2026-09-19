@@ -80,16 +80,26 @@
                                 <div class="text-center p-3">
 
                                     <a
-                                        href="{{ route('dashboard') }}"
+                                        href="{{ route('admin.dashboard') }}"
                                         class="logo logo-admin"
                                     >
 
-                                        <img
-                                            src="{{ asset('assets/images/logo-sm.png') }}"
-                                            height="50"
-                                            alt="LibTune"
-                                            class="auth-logo"
-                                        >
+                                        @php
+                                            $customLogo = collect(\Illuminate\Support\Facades\Storage::disk('public')->exists('branding')
+                                                ? \Illuminate\Support\Facades\Storage::disk('public')->files('branding')
+                                                : [])->first(fn ($file) => str_starts_with(basename($file), 'logo.'));
+                                        @endphp
+
+                                        @if($customLogo)
+                                            <img
+                                                src="{{ asset('storage/' . $customLogo) }}"
+                                                alt="LibTune"
+                                                class="auth-logo"
+                                                style="height: 50px; max-width: 180px; object-fit: contain;"
+                                            >
+                                        @else
+                                            <span class="fw-bold fs-3 text-white">LibTune</span>
+                                        @endif
 
                                     </a>
 

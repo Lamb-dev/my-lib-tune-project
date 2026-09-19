@@ -66,8 +66,7 @@
 
                                                 <button type="submit"
                                                         class="btn btn-sm btn-danger"
-                                                        onclick="return confirm('Are you sure you want to delete this category?')">
-                                                    Delete
+                                                        onclick="return confirmDelete(this, '{{ addslashes($category->cate_name) }}')">                                                    Delete
                                                 </button>
                                             </form>
                                         </td>

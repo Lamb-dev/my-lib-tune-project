@@ -20,6 +20,7 @@
     <link href="{{ asset('backend/assets/css/bootstrap.min.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('backend/assets/css/icons.min.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('backend/assets/css/app.min.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ asset('backend/assets/libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css" />
 
     @yield('styles')
 </head>
@@ -212,6 +213,83 @@
     <script src="{{ asset('backend/assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('backend/assets/libs/simplebar/simplebar.min.js') }}"></script>
     <script src="{{ asset('backend/assets/js/app.js') }}"></script>
+    <script src="{{ asset('backend/assets/libs/sweetalert2/sweetalert2.min.js') }}"></script>
+
+    {{-- Shared confirmation dialog for any action that needs a "are you sure?"
+         step before a form submits — deletes, but also things like granting
+         or revoking admin access. Pass the clicked button plus an options
+         object; anything omitted falls back to a generic delete-style prompt,
+         which is why confirmDelete() below is just a thin wrapper around this.
+
+         <button type="button" onclick="return confirmAction(this, {
+             title: 'Grant admin access?',
+             text: 'They will be able to...',
+             icon: 'warning',
+             confirmButtonText: 'Yes, make admin',
+             confirmButtonClass: 'btn btn-primary'
+         })"> --}}
+    <script>
+        function confirmAction(button, options) {
+            options = options || {};
+            var form = button.closest('form');
+
+            var swalWithBootstrapButtons = Swal.mixin({
+                customClass: {
+                    confirmButton: options.confirmButtonClass || 'btn btn-danger',
+                    cancelButton: 'btn btn-light me-2'
+                },
+                buttonsStyling: false
+            });
+
+            swalWithBootstrapButtons.fire({
+                title: options.title || 'Are you sure?',
+                text: options.text || "You won't be able to revert this!",
+                icon: options.icon || 'warning',
+                showCancelButton: true,
+                confirmButtonText: options.confirmButtonText || 'Yes, do it!',
+                cancelButtonText: options.cancelButtonText || 'No, cancel!',
+                reverseButtons: true
+            }).then(function (result) {
+                if (result.isConfirmed && form) {
+                    form.submit();
+                }
+            });
+
+            return false;
+        }
+
+        // Every existing "Delete" button across the admin panel (Books,
+        // Authors, Categories, etc) already calls this — kept as-is so
+        // none of those views need to change.
+        function confirmDelete(button, itemLabel) {
+            return confirmAction(button, {
+                text: itemLabel
+                    ? 'This will permanently delete "' + itemLabel + '". You won\'t be able to revert this!'
+                    : "You won't be able to revert this!",
+                confirmButtonText: 'Yes, delete it!',
+                confirmButtonClass: 'btn btn-danger'
+            });
+        }
+    </script>
+
+    @if (session('just_logged_in'))
+        <script>
+            Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: function (toast) {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            }).fire({
+                icon: 'success',
+                title: 'Signed in successfully'
+            });
+        </script>
+    @endif
 
     {{-- app.js already toggles the data-bs-theme attribute when #light-dark-mode
          is clicked; this just remembers the choice so it survives page loads. --}}

@@ -72,7 +72,13 @@ Route::get('/dashboard', function () {
 })->name('dashboard');
 
 Route::get('/about', function () {
-    return view('aboutus'); // matching 'aboutus.blade.php'
+    $stats = [
+        'books' => Book::where('is_archived', false)->count(),
+        'authors' => \App\Models\Author::count(),
+        'categories' => \App\Models\BookCategory::count(),
+    ];
+
+    return view('aboutus', compact('stats'));
 }) ->name('aboutus');
 
 
@@ -155,7 +161,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/books/{book}/progress', [BookReaderController::class, 'saveProgress'])->name('books.progress');
     Route::post('/books/{book}/review', [BookController::class, 'storeReview'])->name('books.review');
     Route::post('/books/{book}/upload-epub', [BookController::class, 'uploadEpub'])->name('books.upload-epub');
-
     Route::post('/books/{book}/save', function (Book $book) {
         // toggle() attaches/detaches the pivot row only — it never touches
         // the books table itself. The previous version used
@@ -189,6 +194,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('authors', AuthorController::class);
         Route::resource('categories', BookCategoryController::class);
         Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+        Route::post('/users/{user}/promote', [AdminUserController::class, 'promote'])->name('users.promote');
+        Route::post('/users/{user}/demote', [AdminUserController::class, 'demote'])->name('users.demote');
         Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
         Route::post('/settings/logo', [SettingsController::class, 'updateLogo'])->name('settings.logo.update');
         Route::delete('/settings/logo', [SettingsController::class, 'destroyLogo'])->name('settings.logo.destroy');

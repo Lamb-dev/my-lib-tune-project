@@ -116,10 +116,10 @@
                                                 @csrf
                                                 @method('DELETE')
 
-                                                <button type="submit"
+                                                <button type="button"
                                                         class="btn btn-sm btn-light text-danger"
                                                         title="Delete"
-                                                        onclick="return confirm('Are you sure you want to delete this book?')">
+                                                        onclick="return confirmDelete(this, '{{ addslashes($book->title) }}')">
                                                     <i class="iconoir-trash"></i>
                                                 </button>
                                             </form>
