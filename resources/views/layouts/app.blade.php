@@ -54,8 +54,43 @@
         </main>
 
         <footer class="footer">
-            <div><span class="brand-footer">Lib-Tune</span><span> A quiet place for curious readers.</span></div>
-            <div>Public-domain & non-copyrighted reading · {{ date('Y') }}</div>
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <span class="brand-footer"><i class="fa-solid fa-book-open"></i> Lib-Tune</span>
+                    <p>A quiet place for curious readers. Browse a growing catalogue, save what you love, and read public-domain classics for free — right in your browser.</p>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Explore</h4>
+                    <a href="{{ route('books.search') }}">Browse the catalogue</a>
+                    <a href="{{ route('books.search', ['domain' => 1]) }}">Read online now</a>
+                    <a href="{{ route('aboutus') }}">About us</a>
+                    @auth
+                        <a href="{{ route('library.index') }}">My library</a>
+                    @endauth
+                </div>
+
+                <div class="footer-col">
+                    <h4>Account</h4>
+                    @auth
+                        <a href="{{ route('profile.edit') }}">Profile settings</a>
+                        <form method="POST" action="{{ route('logout') }}" class="inline-form"><button type="submit">Sign out</button></form>
+                    @else
+                        <a href="{{ route('login') }}">Sign in</a>
+                        <a href="{{ route('register') }}">Create an account</a>
+                    @endauth
+                </div>
+
+                <div class="footer-col">
+                    <h4>Have a book in mind?</h4>
+                    <p class="footer-note">Suggest a title from the catalogue page and a librarian will take a look.</p>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <span>&copy; {{ date('Y') }} Lib-Tune &middot; Public-domain &amp; non-copyrighted reading</span>
+                <span class="footer-heart">Built for readers, not algorithms.</span>
+            </div>
         </footer>
     </div>
     <script src="{{ asset('js/libtune.js') }}"></script>

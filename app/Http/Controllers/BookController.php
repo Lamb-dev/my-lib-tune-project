@@ -24,6 +24,7 @@ class BookController extends Controller
     {
         $query = trim((string) $request->input('query', ''));
         $categoryId = $request->input('category');
+        $publicDomainOnly = $request->boolean('domain');
 
         $booksQuery = Book::with(['authors', 'categories']);
 
@@ -31,6 +32,10 @@ class BookController extends Controller
             $booksQuery->whereHas('categories', function ($c) use ($categoryId) {
                 $c->where('book_categories.cate_id', $categoryId);
             });
+        }
+
+        if ($publicDomainOnly) {
+            $booksQuery->where('copyright_status', 'public_domain');
         }
 
         if ($query !== '') {
@@ -49,7 +54,7 @@ class BookController extends Controller
         // browsing) and only when the local shelf is thin.
         $suggestions = collect();
 
-        if ($query !== '' && ! $categoryId && $books->count() < 10) {
+        if ($query !== '' && ! $categoryId && ! $publicDomainOnly && $books->count() < 10) {
             $existingKeys = Book::whereNotNull('open_library_key')
                 ->pluck('open_library_key')
                 ->all();
@@ -73,7 +78,7 @@ class BookController extends Controller
 
         $categories = BookCategory::orderBy('cate_name')->get();
 
-        return view('books.index', compact('books', 'query', 'categoryId', 'categories', 'suggestions'));
+        return view('books.index', compact('books', 'query', 'categoryId', 'categories', 'suggestions', 'publicDomainOnly'));
     }
 
     public function uploadEpub(Request $request, Book $book)

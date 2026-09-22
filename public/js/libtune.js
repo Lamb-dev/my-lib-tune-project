@@ -177,6 +177,53 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ---------------------------------------------------------------
+  // "Suggest a book" form on the browse/search page
+  // ---------------------------------------------------------------
+  const requestForm = document.querySelector('#book-request-form');
+  if (requestForm) {
+    const fileInput = requestForm.querySelector('#req-cover');
+    const fileNameEl = requestForm.querySelector('[data-file-name]');
+    if (fileInput && fileNameEl) {
+      fileInput.addEventListener('change', () => {
+        fileNameEl.textContent = fileInput.files[0]?.name || 'No file chosen';
+      });
+    }
+
+    requestForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = requestForm.querySelector('button[type=submit]');
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+
+      try {
+        const res = await fetch(requestForm.dataset.requestUrl, {
+          method: 'POST',
+          headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json' },
+          body: new FormData(requestForm)
+        });
+
+        if (res.ok) {
+          requestForm.reset();
+          if (fileNameEl) fileNameEl.textContent = 'No file chosen';
+          showToast("Thanks — we'll take a look.", 'fa-solid fa-paper-plane');
+        } else if (res.status === 422) {
+          const data = await res.json().catch(() => null);
+          const firstError = data?.errors ? Object.values(data.errors)[0]?.[0] : null;
+          showToast(firstError || 'Please check the form and try again.', 'fa-solid fa-triangle-exclamation');
+        } else {
+          showToast("Couldn't send that — try again.", 'fa-solid fa-triangle-exclamation');
+        }
+      } catch (err) {
+        showToast("Couldn't reach the server — try again.", 'fa-solid fa-triangle-exclamation');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    });
+  }
+
   async function loadReviews() {
     if (!window.LIBTUNE_REVIEWS_URL) return;
     const box = document.querySelector('#reviews');

@@ -155,6 +155,17 @@
                             </a>
                         </li>
 
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.book-requests.*') ? 'active' : '' }}" href="{{ route('admin.book-requests.index') }}">
+                                <i class="iconoir-message-text menu-icon"></i>
+                                <span>Book Requests</span>
+                                @php $pendingRequestCount = \App\Models\Post::where('status', 'pending')->count(); @endphp
+                                @if($pendingRequestCount)
+                                    <span class="badge bg-warning-subtle text-warning ms-auto">{{ $pendingRequestCount }}</span>
+                                @endif
+                            </a>
+                        </li>
+
                         <li class="menu-label mt-2"><span>System</span></li>
 
                         <li class="nav-item">

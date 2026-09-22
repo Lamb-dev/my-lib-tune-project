@@ -7,6 +7,7 @@ use App\Services\OpenLibraryService;
 
 use App\Http\Controllers\BookReaderController;
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\BookRequestController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SavedBookController;
 
@@ -18,6 +19,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\BookController as AdminBookController;
 use App\Http\Controllers\Admin\AuthorController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\BookRequestController as AdminBookRequestController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\BookCategoryController;
 
@@ -108,6 +110,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/book-requests', [BookRequestController::class, 'store'])->name('book-requests.store');
 });
 
 /*
@@ -151,6 +154,16 @@ Route::get('/books/{book}', function (Book $book, OpenLibraryService $openLibrar
 
     return view('books.show', compact('book', 'moreByAuthor'));
 })->name('books.show');
+
+Route::get('/authors/{author}', function (\App\Models\Author $author) {
+    $books = $author->books()
+        ->with(['authors', 'categories'])
+        ->where('is_archived', false)
+        ->latest('book_id')
+        ->get();
+
+    return view('authors.show', compact('author', 'books'));
+})->name('authors.show');
 
 Route::get('/books/{book}/reviews', [BookController::class, 'getReviews'])->name('books.reviews');
 
@@ -196,6 +209,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
         Route::post('/users/{user}/promote', [AdminUserController::class, 'promote'])->name('users.promote');
         Route::post('/users/{user}/demote', [AdminUserController::class, 'demote'])->name('users.demote');
+        Route::get('/book-requests', [AdminBookRequestController::class, 'index'])->name('book-requests.index');
+        Route::post('/book-requests/{bookRequest}/approve', [AdminBookRequestController::class, 'approve'])->name('book-requests.approve');
+        Route::post('/book-requests/{bookRequest}/reject', [AdminBookRequestController::class, 'reject'])->name('book-requests.reject');
         Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
         Route::post('/settings/logo', [SettingsController::class, 'updateLogo'])->name('settings.logo.update');
         Route::delete('/settings/logo', [SettingsController::class, 'destroyLogo'])->name('settings.logo.destroy');
