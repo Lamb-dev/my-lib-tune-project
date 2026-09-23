@@ -9,6 +9,7 @@ class SavedBookController extends Controller
     {
         $books = auth()->user()
             ->savedBooks()
+            ->where('is_archived', false)
             ->with(['authors', 'categories'])
             ->withCount('ratings')
             ->latest('saved_books.created_at')

@@ -15,6 +15,7 @@ class BookReaderController extends Controller
      */
     public function read(Book $book)
     {
+        abort_if($book->is_archived, 404);
         abort_unless($book->hasEpubFile(), 403, 'This book has no reader file available — try "View source link" on its page instead.');
 
         $progress = ProgressBook::where('user_id', auth()->id())
@@ -39,6 +40,7 @@ class BookReaderController extends Controller
      */
     public function stream(Book $book)
     {
+        abort_if($book->is_archived, 404);
         abort_unless($book->hasEpubFile(), 404, 'Book file not found.');
 
         return Storage::disk('local')->response($book->file_path, null, [

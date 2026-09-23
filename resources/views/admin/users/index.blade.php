@@ -156,7 +156,19 @@
                                                 {{ $user->saved_books_count }}
                                             </span>
                                         </td>
-
+                                        <td>
+                                        <form action="{{ route('admin.users.toggle-status', $user->user_id) }}" method="POST">
+                                        @csrf
+                                            <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" role="switch"
+                                        onchange="this.form.submit()"
+                                        {{ $user->is_active ? 'checked' : '' }}>
+                                        <label class="form-check-label small {{ $user->is_active ? 'text-success' : 'text-secondary' }}">
+                                        {{ $user->is_active ? 'Active' : 'Inactive' }}
+                                        </label>
+                                        </div>
+                                            </form>
+                                        </td>
                                         <td class="text-muted">{{ $user->created_at->format('M d, Y') }}</td>
 
                                         <td class="text-end">

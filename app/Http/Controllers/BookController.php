@@ -26,7 +26,8 @@ class BookController extends Controller
         $categoryId = $request->input('category');
         $publicDomainOnly = $request->boolean('domain');
 
-        $booksQuery = Book::with(['authors', 'categories']);
+        $booksQuery = Book::where('is_archived', false)
+        ->with(['authors', 'categories']);
 
         if ($categoryId) {
             $booksQuery->whereHas('categories', function ($c) use ($categoryId) {

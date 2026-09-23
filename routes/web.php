@@ -32,13 +32,15 @@ use App\Http\Controllers\Admin\BookCategoryController;
 Route::get('/', fn () => redirect()->route('dashboard'));
 
 Route::get('/dashboard', function () {
-    $popular = Book::with(['authors', 'categories'])
+    $popular = Book::where('is_archived', false)
+        ->with(['authors', 'categories'])
         ->withCount('ratings')
         ->orderByDesc('published_year')
         ->limit(5)
         ->get();
 
-    $recent = Book::with(['authors', 'categories'])
+    $recent = Book::where('is_archived', false)
+        ->with(['authors', 'categories'])
         ->withCount('ratings')
         ->latest()
         ->limit(5)
@@ -64,6 +66,7 @@ Route::get('/dashboard', function () {
 
         $recentlySaved = auth()->user()
             ->savedBooks()
+            ->where('is_archived', false)
             ->with(['authors', 'categories'])
             ->orderByPivot('created_at', 'desc')
             ->limit(6)
@@ -122,6 +125,11 @@ Route::middleware('auth')->group(function () {
 Route::get('/search', [BookController::class, 'search'])->name('books.search');
 
 Route::get('/books/{book}', function (Book $book, OpenLibraryService $openLibrary) {
+    // Archived means hidden from the public site entirely — including a
+    // direct link someone already has bookmarked or shared, not just
+    // absent from browse/search listings.
+    abort_if($book->is_archived, 404);
+
     $book->load(['authors', 'categories']);
 
     if ($book->open_library_key && (! $book->description || ! $book->cate_id)) {
@@ -215,5 +223,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
         Route::post('/settings/logo', [SettingsController::class, 'updateLogo'])->name('settings.logo.update');
         Route::delete('/settings/logo', [SettingsController::class, 'destroyLogo'])->name('settings.logo.destroy');
+        Route::post('/books/{book}/toggle-status', [AdminBookController::class, 'toggleStatus'])->name('books.toggle-status');
+        Route::post('/users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('users.toggle-status');
     });
 });

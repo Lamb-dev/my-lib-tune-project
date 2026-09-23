@@ -87,4 +87,10 @@ class UserController extends Controller
 
         return back()->with('success', "{$user->username}'s admin access has been revoked.");
     }
+    public function toggleStatus(User $user)
+    {
+    $user->update(['is_active' => ! $user->is_active]);
+
+    return back()->with('success', $user->username . ' is now ' . ($user->is_active ? 'active' : 'inactive') . '.');
+    }
 }

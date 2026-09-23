@@ -95,11 +95,17 @@
                                         <td>{{ $book->published_year ?? 'N/A' }}</td>
 
                                         <td>
-                                            @if($book->is_archived)
-                                                <span class="badge bg-secondary-subtle text-secondary">Archived</span>
-                                            @else
-                                                <span class="badge bg-success-subtle text-success">Active</span>
-                                            @endif
+                                        <form action="{{ route('admin.books.toggle-status', $book->book_id) }}" method="POST">
+                                             @csrf
+                                    <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input" type="checkbox" role="switch"
+                                      onchange="this.form.submit()"
+                                      {{ !$book->is_archived ? 'checked' : '' }}>
+                                         <label class="form-check-label small {{ $book->is_archived ? 'text-secondary' : 'text-success' }}">
+                                        {{ $book->is_archived ? 'Inactive' : 'Active' }}
+                                        </label>
+                                      </div>
+                                        </form>
                                         </td>
 
                                         <td class="text-end">

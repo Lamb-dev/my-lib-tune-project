@@ -241,4 +241,10 @@ class BookController extends Controller
             ->route('admin.books.index')
             ->with('success', 'Book deleted successfully.');
     }
+    public function toggleStatus(Book $book)
+    {
+    $book->update(['is_archived' => ! $book->is_archived]);
+
+    return back()->with('success', '"' . $book->title . '" is now ' . ($book->is_archived ? 'inactive' : 'active') . '.');
+    }
 }
