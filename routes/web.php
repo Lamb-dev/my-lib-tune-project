@@ -220,6 +220,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/book-requests', [AdminBookRequestController::class, 'index'])->name('book-requests.index');
         Route::post('/book-requests/{bookRequest}/approve', [AdminBookRequestController::class, 'approve'])->name('book-requests.approve');
         Route::post('/book-requests/{bookRequest}/reject', [AdminBookRequestController::class, 'reject'])->name('book-requests.reject');
+        Route::delete('/book-requests/{bookRequest}', [AdminBookRequestController::class, 'destroy'])->name('book-requests.destroy');
         Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
         Route::post('/settings/logo', [SettingsController::class, 'updateLogo'])->name('settings.logo.update');
         Route::delete('/settings/logo', [SettingsController::class, 'destroyLogo'])->name('settings.logo.destroy');

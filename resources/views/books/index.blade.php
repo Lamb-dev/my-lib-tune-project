@@ -70,8 +70,8 @@
                     <input type="text" id="req-title" name="title" maxlength="255" required>
                 </div>
                 <div class="book-request-field">
-                    <label for="req-author">Author</label>
-                    <input type="text" id="req-author" name="author_name" maxlength="255" required>
+                    <label for="req-author">Author <span>(optional)</span></label>
+                    <input type="text" id="req-author" name="author_name" maxlength="255" placeholder="If you know it">
                 </div>
             </div>
             <div class="book-request-field">

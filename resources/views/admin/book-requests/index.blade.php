@@ -109,6 +109,20 @@
                                             <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
                                         </form>
                                     @endif
+                                    <form action="{{ route('admin.book-requests.destroy', $request) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="button" class="btn btn-sm btn-light text-danger"
+                                                onclick="return confirmAction(this, {
+                                                    title: 'Delete this suggestion?',
+                                                    text: 'This removes it permanently, including its cover image if one was attached.',
+                                                    icon: 'warning',
+                                                    confirmButtonText: 'Yes, delete it',
+                                                    confirmButtonClass: 'btn btn-danger'
+                                                })">
+                                            <i class="iconoir-trash"></i>
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
 

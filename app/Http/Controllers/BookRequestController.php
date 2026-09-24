@@ -16,7 +16,7 @@ class BookRequestController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'author_name' => 'required|string|max:255',
+            'author_name' => 'nullable|string|max:255',
             'body' => 'nullable|string|max:2000',
             'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
@@ -28,7 +28,7 @@ class BookRequestController extends Controller
 
         Post::create([
             'title' => $validated['title'],
-            'author_name' => $validated['author_name'],
+            'author_name' => $validated['author_name'] ?: null,
             'body' => $validated['body'] ?? '',
             'cover_image' => $coverPath,
             'user_id' => auth()->id(),

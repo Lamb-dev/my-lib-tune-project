@@ -32,4 +32,17 @@ class BookRequestController extends Controller
 
         return back()->with('success', 'Marked as rejected.');
     }
+
+    public function destroy(Post $bookRequest): RedirectResponse
+    {
+        // Also clean up the uploaded cover, if one was attached, rather
+        // than leaving an orphaned file in storage.
+        if ($bookRequest->cover_image) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($bookRequest->cover_image);
+        }
+
+        $bookRequest->delete();
+
+        return back()->with('success', 'Suggestion deleted.');
+    }
 }
