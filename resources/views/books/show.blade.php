@@ -33,6 +33,12 @@
                 </button>
                 <a href="{{ route('library.index') }}" class="save-confirm" data-save-confirm><i class="fa-solid fa-check"></i> Added to your library</a>
             @endauth</div>
+            @auth
+                <div class="status-picker" data-status-url="{{ route('books.status', $book) }}">
+                    <button type="button" class="status-pill {{ $readingStatus === 'reading' ? 'active' : '' }}" data-status="reading"><i class="fa-solid fa-book"></i> Currently reading</button>
+                    <button type="button" class="status-pill {{ $readingStatus === 'finished' ? 'active' : '' }}" data-status="finished"><i class="fa-solid fa-check"></i> Finished</button>
+                </div>
+            @endauth
             <div class="book-facts"><div><span>AUTHOR</span>{{ $book->authorNames() }}</div><div><span>YEAR</span>{{ $book->published_year ?? 'Unknown' }}</div><div><span>FORMAT</span>{{ $book->isReadable() ? 'EPUB · Online' : 'Catalogue only' }}</div></div>
         </div>
     </div>

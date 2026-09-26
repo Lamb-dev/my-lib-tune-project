@@ -32,7 +32,13 @@
          <a href="{{ route('library.index') }}" class="nav-link {{ request()->routeIs('library.index') ? 'active' : '' }}"><i class="fa-solid fa-bookmark"></i> My Library</a>
          <a href="{{ route('aboutus') }}" class="nav-link {{ request()->routeIs('aboutus') ? 'active' : '' }}">About</a>
      </div>
-     <a href="{{ route('profile.edit') }}" class="avatar" title="Profile">{{ strtoupper(substr(auth()->user()->username, 0, 1)) }}</a>
+     <a href="{{ route('profile.edit') }}" class="avatar" title="Profile">
+        @if(auth()->user()->profile_picture_path)
+            <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url(auth()->user()->profile_picture_path) }}" alt="{{ auth()->user()->username }}">
+        @else
+            {{ strtoupper(substr(auth()->user()->username, 0, 1)) }}
+        @endif
+     </a>
         <form method="POST" action="{{ route('logout') }}" class="inline-form">@csrf<button class="icon-btn" title="Sign out"><i class="fa-solid fa-arrow-right-from-bracket"></i></button></form>
      @else
         <div class="nav-pill-group">

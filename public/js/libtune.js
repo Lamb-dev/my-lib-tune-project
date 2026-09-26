@@ -278,4 +278,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
     revealTargets.forEach(el => observer.observe(el));
   }
+
+  // ---------------------------------------------------------------
+  // Reading status picker ("Currently reading" / "Finished") on the
+  // book detail page. Clicking an already-active pill clears the
+  // status back to "none" (still saved/wanted, just not marked).
+  // ---------------------------------------------------------------
+  document.addEventListener('click', async (e) => {
+    const pill = e.target.closest('[data-status]');
+    if (!pill || pill.disabled) return;
+
+    const picker = pill.closest('[data-status-url]');
+    if (!picker) return;
+
+    const wasActive = pill.classList.contains('active');
+    const status = wasActive ? 'none' : pill.dataset.status;
+    pill.disabled = true;
+
+    try {
+      const res = await fetch(picker.dataset.statusUrl, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': token, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+
+      if (res.status === 401 || res.status === 419) {
+        showToast('Sign in to track your reading status.', 'fa-solid fa-circle-info');
+        return;
+      }
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+      const data = await res.json();
+      picker.querySelectorAll('[data-status]').forEach(p => p.classList.remove('active'));
+      if (data.status !== 'none') {
+        picker.querySelector(`[data-status="${data.status}"]`)?.classList.add('active');
+      }
+      showToast(
+        data.status === 'reading' ? 'Marked as currently reading.'
+          : data.status === 'finished' ? 'Marked as finished.'
+          : 'Status cleared.',
+        'fa-solid fa-bookmark'
+      );
+    } catch (err) {
+      showToast("Couldn't update reading status — try again.", 'fa-solid fa-circle-exclamation');
+    } finally {
+      pill.disabled = false;
+    }
+  });
 });

@@ -46,6 +46,14 @@ Route::get('/dashboard', function () {
         ->limit(5)
         ->get();
 
+    $publicDomain = Book::where('is_archived', false)
+        ->where('copyright_status', 'public_domain')
+        ->with(['authors', 'categories'])
+        ->withCount('ratings')
+        ->latest()
+        ->limit(5)
+        ->get();
+
     $continueReading = collect();
     $recentlySaved = collect();
 
@@ -73,7 +81,7 @@ Route::get('/dashboard', function () {
             ->get();
     }
 
-    return view('dashboard', compact('popular', 'recent', 'continueReading', 'recentlySaved'));
+    return view('dashboard', compact('popular', 'recent', 'publicDomain', 'continueReading', 'recentlySaved'));
 })->name('dashboard');
 
 Route::get('/about', function () {
@@ -160,7 +168,18 @@ Route::get('/books/{book}', function (Book $book, OpenLibraryService $openLibrar
             ->limit(4)
             ->get();
 
-    return view('books.show', compact('book', 'moreByAuthor'));
+    $readingStatus = null;
+    if (auth()->check()) {
+        $progress = \App\Models\ProgressBook::where('user_id', auth()->id())
+            ->where('book_id', $book->book_id)
+            ->first();
+
+        if ($progress) {
+            $readingStatus = $progress->is_finished ? 'finished' : 'reading';
+        }
+    }
+
+    return view('books.show', compact('book', 'moreByAuthor', 'readingStatus'));
 })->name('books.show');
 
 Route::get('/authors/{author}', function (\App\Models\Author $author) {
@@ -180,6 +199,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/books/{book}/read', [BookReaderController::class, 'read'])->name('books.read');
     Route::get('/books/{book}/file', [BookReaderController::class, 'stream'])->name('books.file');
     Route::post('/books/{book}/progress', [BookReaderController::class, 'saveProgress'])->name('books.progress');
+    Route::post('/books/{book}/finished', [BookReaderController::class, 'toggleFinished'])->name('books.finished');
+    Route::post('/books/{book}/status', [BookReaderController::class, 'setStatus'])->name('books.status');
     Route::post('/books/{book}/review', [BookController::class, 'storeReview'])->name('books.review');
     Route::post('/books/{book}/upload-epub', [BookController::class, 'uploadEpub'])->name('books.upload-epub');
     Route::post('/books/{book}/save', function (Book $book) {

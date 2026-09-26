@@ -33,5 +33,11 @@
     @else <div class="empty-state"><h3>No new books yet.</h3></div>@endif
 </section>
 
+<section class="section section-tight">
+    <div class="section-head"><div><p class="eyebrow">FREE TO READ</p><h2>Public domain classics</h2></div><a class="text-link" href="{{ route('books.search', ['domain' => 1]) }}">View all <i class="fa-solid fa-arrow-right"></i></a></div>
+    @if($publicDomain->count())<div class="book-grid">@foreach($publicDomain as $book)<x-book-card :book="$book" />@endforeach</div>
+    @else <div class="empty-state"><i class="fa-solid fa-earth-americas"></i><h3>No public-domain titles yet.</h3><p>Copyright-free classics will show up here once added.</p></div>@endif
+</section>
+
 <section class="discover-band"><div><p class="eyebrow">A LIBRARY, NOT A FEED</p><h2>Choose your next<br><em>world to enter.</em></h2></div><a class="button button-light" href="{{ route('books.search') }}">Explore the collection</a></section>
 @endsection

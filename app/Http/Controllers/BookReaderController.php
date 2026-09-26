@@ -26,7 +26,9 @@ class BookReaderController extends Controller
             'book' => $book,
             'fileUrl' => route('books.file', $book),
             'progressUrl' => route('books.progress', $book),
+            'finishedUrl' => route('books.finished', $book),
             'lastCfi' => $progress->last_read ?? null,
+            'isFinished' => (bool) ($progress->is_finished ?? false),
         ]);
     }
 
@@ -66,5 +68,54 @@ class BookReaderController extends Controller
         );
 
         return response()->json(['saved' => true]);
+    }
+
+    /**
+     * Mark a book finished/unfinished for the current reader. Creates a
+     * progress row if one doesn't exist yet (e.g. someone reading via
+     * "View source link" who never triggered an epub progress save).
+     * POST /books/{book}/finished
+     */
+    public function toggleFinished(Book $book)
+    {
+        $progress = ProgressBook::firstOrCreate(
+            ['user_id' => auth()->id(), 'book_id' => $book->book_id]
+        );
+
+        $progress->update(['is_finished' => ! $progress->is_finished]);
+
+        return response()->json(['finished' => $progress->is_finished]);
+    }
+
+    /**
+     * Set a reading status directly (used by the "Want to read / Currently
+     * reading / Finished" picker on the book page). Works for any book,
+     * not just ones with an epub file — a catalogue-only or external-link
+     * book can still be marked as being read.
+     * POST /books/{book}/status  { status: reading|finished|none }
+     */
+    public function setStatus(Request $request, Book $book)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:reading,finished,none',
+        ]);
+
+        if ($validated['status'] === 'none') {
+            ProgressBook::where('user_id', auth()->id())
+                ->where('book_id', $book->book_id)
+                ->delete();
+
+            return response()->json(['status' => 'none']);
+        }
+
+        $progress = ProgressBook::firstOrCreate(
+            ['user_id' => auth()->id(), 'book_id' => $book->book_id]
+        );
+
+        $progress->update([
+            'is_finished' => $validated['status'] === 'finished',
+        ]);
+
+        return response()->json(['status' => $validated['status']]);
     }
 }
