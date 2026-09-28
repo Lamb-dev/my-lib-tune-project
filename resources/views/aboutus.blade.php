@@ -60,46 +60,32 @@
         <p class="hero-sub" style="margin:14px auto 0;text-align:center">A small team keeping the shelves organized and the reader running smoothly.</p>
     </div>
 
-@php
-    // Drop a photo into public/images/team/ using the exact filename
-    // below and it replaces the initials automatically — no template
-    // changes needed. Recommended: a square image, at least 200x200px.
-    $team = [
-        [
-            'name' => 'Pich chansereysophea', 'role' => 'Founder', 'initials' => 'PC',
-            'email' => 'jane@example.com', 'photo' => 'images/team/jane-doe.jpg',
-            'bio' => 'Started Lib-Tune after one too many library apps buried in ads. Handles the roadmap and the catalogue.',
-        ],
-        [
-            'name' => 'Sarin Sereisatha', 'role' => 'Front-End Developer', 'initials' => 'SS',
-            'email' => 'mike@example.com', 'photo' => 'images/team/mike-ross.jpg',
-            'bio' => 'Designs the reading experience — covers, layout, and the little details that make a page feel calm.',
-        ],
-        [
-            'name' => 'Rattana Sambath Ratanak', 'role' => 'Backend Developer', 'initials' => 'RSR',
-            'email' => 'john@example.com', 'photo' => 'images/team/john-doe.jpg',
-            'bio' => "Works on the reader and the admin tools, and hunts down whatever's making the site feel clunky.",
-        ],
-    ];
-@endphp
-
-<div class="team-grid">
-    @foreach($team as $member)
-        <div class="team-card">
-            <div class="team-avatar">
-                @if(file_exists(public_path($member['photo'])))
-                    <img src="{{ asset($member['photo']) }}" alt="{{ $member['name'] }}">
+    <div class="team-grid">
+        @forelse($team as $member)
+            <div class="team-card">
+                @if($member->photo_path)
+                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($member->photo_path) }}" alt="{{ $member->name }}">
                 @else
-                    {{ $member['initials'] }}
+                    <div class="team-card-noimg">{{ $member->initials() }}</div>
                 @endif
+                <div class="team-overlay">
+                    <h3>{{ $member->name }}</h3>
+                    <p class="team-role">{{ $member->role }}</p>
+                    @if($member->bio)<p class="team-bio">{{ $member->bio }}</p>@endif
+                    @if($member->email || $member->linkedin_url || $member->twitter_url || $member->website_url)
+                        <div class="team-social">
+                            @if($member->email)<a href="mailto:{{ $member->email }}" title="Email"><i class="fa-regular fa-envelope"></i></a>@endif
+                            @if($member->linkedin_url)<a href="{{ $member->linkedin_url }}" target="_blank" rel="noopener noreferrer" title="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>@endif
+                            @if($member->twitter_url)<a href="{{ $member->twitter_url }}" target="_blank" rel="noopener noreferrer" title="Twitter / X"><i class="fa-brands fa-x-twitter"></i></a>@endif
+                            @if($member->website_url)<a href="{{ $member->website_url }}" target="_blank" rel="noopener noreferrer" title="Website"><i class="fa-solid fa-globe"></i></a>@endif
+                        </div>
+                    @endif
+                </div>
             </div>
-            <h3>{{ $member['name'] }}</h3>
-            <p class="team-role">{{ $member['role'] }}</p>
-            <p>{{ $member['bio'] }}</p>
-            <a href="mailto:{{ $member['email'] }}" class="button button-outline button-small button-full">Contact</a>
-        </div>
-    @endforeach
-</div>
+        @empty
+            <p class="muted" style="grid-column:1/-1;text-align:center">No team members added yet.</p>
+        @endforelse
+    </div>
 </section>
 
 @endsection

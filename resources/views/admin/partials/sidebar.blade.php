@@ -50,6 +50,12 @@
                 </a>
             </li>
 
+            <li>
+                <a href="{{ route('admin.team.index') }}">
+                    <span>Team (About Page)</span>
+                </a>
+            </li>
+
         </ul>
 
     </div>

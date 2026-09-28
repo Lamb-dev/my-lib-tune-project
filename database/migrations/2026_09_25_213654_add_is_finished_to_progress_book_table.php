@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('progress_book', function (Blueprint $table) {
             if (! Schema::hasColumn('progress_book', 'is_finished')) {
-                $table->boolean('is_finished')->default(false)->after('progress');
+                $table->boolean('is_finished')->default(false)->after('last_read');
             }
         });
     }

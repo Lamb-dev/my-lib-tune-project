@@ -20,24 +20,55 @@
 </section>
 
 <section class="section section-tight">
-    <div class="section-head"><div><p class="eyebrow">CURATED FOR YOU</p><h2>Popular in the library</h2></div><a class="text-link" href="{{ route('books.search') }}">View all <i class="fa-solid fa-arrow-right"></i></a></div>
-    @if($popular->count())<div class="book-grid">@foreach($popular as $book)<x-book-card :book="$book" />@endforeach</div>
-    @else <div class="empty-state"><i class="fa-regular fa-bookmark"></i><h3>The shelves are waiting.</h3><p>Add books to begin building your library.</p></div>@endif
+    <x-book-carousel-section
+        :books="$popular"
+        eyebrow="CURATED FOR YOU"
+        title="Popular in the library"
+        :view-all-url="route('books.search')"
+        empty-title="The shelves are waiting."
+        empty-body="Add books to begin building your library." />
 </section>
 
-<section class="quote-band"><span class="quote-mark">“</span><blockquote>A reader lives a thousand lives before he dies. The man who never reads lives only one.</blockquote><cite>— George R. R. Martin</cite></section>
+<section class="quote-carousel" data-quote-carousel aria-live="polite">
+    <span class="quote-mark">“</span>
+    @foreach([
+        ['text' => 'A reader lives a thousand lives before he dies. The man who never reads lives only one.', 'author' => 'George R. R. Martin'],
+        ['text' => 'The man who does not read has no advantage over the man who cannot read.', 'author' => 'Mark Twain'],
+        ['text' => 'A room without books is like a body without a soul.', 'author' => 'Cicero'],
+        ['text' => 'There is no friend as loyal as a book.', 'author' => 'Ernest Hemingway'],
+        ['text' => 'Books are a uniquely portable magic.', 'author' => 'Stephen King'],
+    ] as $i => $quote)
+        <div class="quote-slide" data-quote-slide="{{ $i }}" @if($i !== 0) hidden @endif>
+            <blockquote>{{ $quote['text'] }}</blockquote>
+            <cite>— {{ $quote['author'] }}</cite>
+        </div>
+    @endforeach
+    <div class="quote-dots">
+        @for($i = 0; $i < 5; $i++)
+            <button type="button" class="quote-dot {{ $i === 0 ? 'active' : '' }}" data-quote-dot="{{ $i }}" aria-label="Show quote {{ $i + 1 }}"></button>
+        @endfor
+    </div>
+</section>
 
 <section class="section">
-    <div class="section-head"><div><p class="eyebrow">JUST ARRIVED</p><h2>New on the shelves</h2></div><a class="text-link" href="{{ route('books.search') }}">Browse catalogue <i class="fa-solid fa-arrow-right"></i></a></div>
-    @if($recent->count())<div class="book-grid">@foreach($recent as $book)<x-book-card :book="$book" />@endforeach</div>
-    @else <div class="empty-state"><h3>No new books yet.</h3></div>@endif
+    <x-book-carousel-section
+        :books="$recent"
+        eyebrow="JUST ARRIVED"
+        title="New on the shelves"
+        :view-all-url="route('books.search')"
+        empty-title="No new books yet." />
 </section>
 
 <section class="section section-tight">
-    <div class="section-head"><div><p class="eyebrow">FREE TO READ</p><h2>Public domain classics</h2></div><a class="text-link" href="{{ route('books.search', ['domain' => 1]) }}">View all <i class="fa-solid fa-arrow-right"></i></a></div>
-    @if($publicDomain->count())<div class="book-grid">@foreach($publicDomain as $book)<x-book-card :book="$book" />@endforeach</div>
-    @else <div class="empty-state"><i class="fa-solid fa-earth-americas"></i><h3>No public-domain titles yet.</h3><p>Copyright-free classics will show up here once added.</p></div>@endif
+    <x-book-carousel-section
+        :books="$publicDomain"
+        eyebrow="FREE TO READ"
+        title="Public domain classics"
+        :view-all-url="route('books.search', ['domain' => 1])"
+        empty-icon="fa-solid fa-earth-americas"
+        empty-title="No public-domain titles yet."
+        empty-body="Copyright-free classics will show up here once added." />
 </section>
 
-<section class="discover-band"><div><p class="eyebrow">A LIBRARY, NOT A FEED</p><h2>Choose your next<br><em>world to enter.</em></h2></div><a class="button button-light" href="{{ route('books.search') }}">Explore the collection</a></section>
+<section class="discover-band"><div><p class="eyebrow">TONIGHT'S PICK</p><h2>Can't decide?<br><em>Let the shelf choose.</em></h2></div><a class="button button-light" href="{{ route('books.random') }}"><i class="fa-solid fa-shuffle"></i> Surprise me</a></section>
 @endsection

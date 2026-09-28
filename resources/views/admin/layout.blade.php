@@ -146,6 +146,13 @@
                             </a>
                         </li>
 
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('admin.team.*') ? 'active' : '' }}" href="{{ route('admin.team.index') }}">
+                                <i class="iconoir-group menu-icon"></i>
+                                <span>Team (About Page)</span>
+                            </a>
+                        </li>
+
                         <li class="menu-label mt-2"><span>Community</span></li>
 
                         <li class="nav-item">

@@ -325,4 +325,56 @@ document.addEventListener('DOMContentLoaded', () => {
       pill.disabled = false;
     }
   });
+
+  // ---------------------------------------------------------------
+  // "More picks" — cycles a book-grid through pre-rendered pages of
+  // books instead of reloading the page. Loops back to page 0 after
+  // the last one.
+  // ---------------------------------------------------------------
+  document.querySelectorAll('[data-book-carousel]').forEach(carousel => {
+    const pages = carousel.querySelectorAll('[data-carousel-page]');
+    const nextBtn = carousel.querySelector('[data-carousel-next]');
+    if (!nextBtn || pages.length < 2) return;
+
+    let current = 0;
+    nextBtn.addEventListener('click', () => {
+      pages[current].hidden = true;
+      current = (current + 1) % pages.length;
+      pages[current].hidden = false;
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // Quote carousel on the dashboard — auto-advances every 6s, pauses
+  // on hover, and can be jumped to directly via the dots.
+  // ---------------------------------------------------------------
+  document.querySelectorAll('[data-quote-carousel]').forEach(carousel => {
+    const slides = carousel.querySelectorAll('[data-quote-slide]');
+    const dots = carousel.querySelectorAll('[data-quote-dot]');
+    if (slides.length < 2) return;
+
+    let current = 0;
+    let timer;
+
+    function show(index) {
+      slides[current].hidden = true;
+      dots[current]?.classList.remove('active');
+      current = index;
+      slides[current].hidden = false;
+      dots[current]?.classList.add('active');
+    }
+
+    function start() {
+      timer = setInterval(() => show((current + 1) % slides.length), 6000);
+    }
+
+    start();
+    carousel.addEventListener('mouseenter', () => clearInterval(timer));
+    carousel.addEventListener('mouseleave', start);
+    dots.forEach(dot => dot.addEventListener('click', () => {
+      clearInterval(timer);
+      show(Number(dot.dataset.quoteDot));
+      start();
+    }));
+  });
 });

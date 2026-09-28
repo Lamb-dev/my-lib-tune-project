@@ -36,14 +36,14 @@ Route::get('/dashboard', function () {
         ->with(['authors', 'categories'])
         ->withCount('ratings')
         ->orderByDesc('published_year')
-        ->limit(5)
+        ->limit(20)
         ->get();
 
     $recent = Book::where('is_archived', false)
         ->with(['authors', 'categories'])
         ->withCount('ratings')
         ->latest()
-        ->limit(5)
+        ->limit(20)
         ->get();
 
     $publicDomain = Book::where('is_archived', false)
@@ -51,7 +51,7 @@ Route::get('/dashboard', function () {
         ->with(['authors', 'categories'])
         ->withCount('ratings')
         ->latest()
-        ->limit(5)
+        ->limit(20)
         ->get();
 
     $continueReading = collect();
@@ -91,7 +91,9 @@ Route::get('/about', function () {
         'categories' => \App\Models\BookCategory::count(),
     ];
 
-    return view('aboutus', compact('stats'));
+    $team = \App\Models\TeamMember::orderBy('sort_order')->orderBy('name')->get();
+
+    return view('aboutus', compact('stats', 'team'));
 }) ->name('aboutus');
 
 
@@ -131,6 +133,14 @@ Route::middleware('auth')->group(function () {
 */
 
 Route::get('/search', [BookController::class, 'search'])->name('books.search');
+
+Route::get('/books/random', function () {
+    $book = Book::where('is_archived', false)->inRandomOrder()->first();
+
+    return $book
+        ? redirect()->route('books.show', $book)
+        : redirect()->route('books.search');
+})->name('books.random');
 
 Route::get('/books/{book}', function (Book $book, OpenLibraryService $openLibrary) {
     // Archived means hidden from the public site entirely — including a
@@ -234,6 +244,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/books-lookup', [AdminBookController::class, 'lookup'])->name('books.lookup');
         Route::resource('books', AdminBookController::class);
         Route::resource('authors', AuthorController::class);
+        Route::resource('team', \App\Http\Controllers\Admin\TeamMemberController::class);
         Route::resource('categories', BookCategoryController::class);
         Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
         Route::post('/users/{user}/promote', [AdminUserController::class, 'promote'])->name('users.promote');
